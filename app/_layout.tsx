@@ -1,29 +1,27 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { Stack, usePathname, router } from 'expo-router';
+import { useEffect } from 'react';
+import { useAuthStatus } from '@/hooks/useAuth';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  const pathname = usePathname();
+  const authStatus = useAuthStatus();
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
+  useEffect(() => {
+    if (authStatus === 'loading') return;
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+    const isPublic = publicRoutes.includes(pathname);
+    const isAuthenticated = authStatus === 'authenticated';
+
+    if (!isAuthenticated && !isPublic) {
+      router.replace('/login');
+    }
+
+    if (isAuthenticated && isPublic) {
+      router.replace('/home');
+    }
+  }, [authStatus, pathname]);
+
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
