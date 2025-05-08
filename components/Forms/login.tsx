@@ -1,78 +1,59 @@
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
+import { View } from 'react-native';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
+import Toast from 'react-native-toast-message';
+
+import AuthLayout from '@/components/layouts/AuthLayout';
 import { login } from '@/utils/auth';
 import { router } from 'expo-router';
-
-const schema = yup.object().shape({
-  email: yup.string().email('Invalid email').required('Email is required'),
-  password: yup.string().min(6, 'Min 6 characters').required('Password is required'),
-});
+import { loginSchema } from '@/constants/Validations';
+import FormInput from '../Atoms/Input/FormInput';
+import loginStyles from '../Styles/LoginStyles';
+import PrimaryButton from '../Atoms/Buttons/PrimaryButton';
 
 export default function LoginPage() {
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm({ resolver: yupResolver(schema) });
+  } = useForm({ resolver: yupResolver(loginSchema) });
 
   const onSubmit = async (data: any) => {
-    await login('dummy-token');
-    router.replace('/home');
+    try {
+      const email = data.email.toLowerCase();
+      await login({ email, password: data.password });
+      Toast.show({ type: 'success', text1: 'Login Successful' });
+      router.replace('/home');
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Something went wrong';
+      Toast.show({ type: 'error', text1: 'Login Failed', text2: errMsg });
+    }
   };
+  
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-
-      <Controller
-        control={control}
-        name="email"
-        defaultValue=""
-        render={({ field: { onChange, value } }) => (
-          <>
-            <TextInput
-              placeholder="Email"
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            {errors.email?.message && (
-              <Text style={styles.error}>{errors.email.message}</Text>
-            )}
-          </>
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="password"
-        defaultValue=""
-        render={({ field: { onChange, value } }) => (
-          <>
-            <TextInput
-              placeholder="Password"
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              secureTextEntry
-            />
-            {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
-          </>
-        )}
-      />
-
-      <Button title="Login" onPress={handleSubmit(onSubmit)} />
-    </View>
+    <>
+      <AuthLayout title="Welcome LiftOffian!">
+        <FormInput
+          name="email"
+          control={control}
+          placeholder="Email"
+          error={errors.email?.message}
+          style={loginStyles.input}
+        />
+        <FormInput
+          name="password"
+          control={control}
+          placeholder="Password"
+          secureTextEntry
+          error={errors.password?.message}
+          style={loginStyles.input}
+        />
+        <View style={loginStyles.buttonContainer}>
+        <PrimaryButton title="Login" onPress={handleSubmit(onSubmit)} />
+        </View>
+      </AuthLayout>
+      <Toast />
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, marginBottom: 4, borderRadius: 6 },
-  error: { color: 'red', marginBottom: 8, marginLeft: 4 },
-});
