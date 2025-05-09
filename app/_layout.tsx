@@ -1,10 +1,17 @@
-import { Stack, usePathname, router } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { useEffect } from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStatus } from '@/hooks/useAuth';
 import { View, StyleSheet } from 'react-native';
+import { openURL } from '@/utils/navigation';
+import { Routes } from '@/constants/enums';
 
-const publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+const publicRoutes = [
+  '/login',
+  '/signUp',
+  '/forgot-password',
+  '/reset-password',
+];
 
 export default function RootLayout() {
   const pathname = usePathname();
@@ -17,11 +24,11 @@ export default function RootLayout() {
     const isAuthenticated = authStatus === 'authenticated';
 
     if (!isAuthenticated && !isPublic) {
-      router.replace('/login');
+      openURL(Routes.LOGIN);
     }
 
     if (isAuthenticated && isPublic) {
-      router.replace('/home');
+      openURL(Routes.HOME);
     }
   }, [authStatus, pathname]);
 
@@ -39,7 +46,7 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff', // Optional background color
+    backgroundColor: '#fff',
   },
   container: {
     flex: 1,

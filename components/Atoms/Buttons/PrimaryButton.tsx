@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, DimensionValue } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, DimensionValue, ActivityIndicator } from 'react-native';
 
 interface PrimaryButtonProps {
   title: string;
@@ -8,6 +8,7 @@ interface PrimaryButtonProps {
   width?: DimensionValue;
   style?: ViewStyle;
   disabled?: boolean;
+  loading?: boolean;
 }
 
 export default function PrimaryButton({
@@ -17,19 +18,24 @@ export default function PrimaryButton({
   width = '100%',
   style,
   disabled = false,
+  loading = false,
 }: PrimaryButtonProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
       style={[
         styles.button,
-        { height, width, opacity: disabled ? 0.5 : 1 } as ViewStyle,
+        { height, width, opacity: disabled || loading ? 0.5 : 1 } as ViewStyle,
         style,
       ]}
       activeOpacity={0.8}
-      disabled={disabled}
+      disabled={disabled || loading}
     >
-      <Text style={styles.buttonText}>{title}</Text>
+      {loading ? (
+        <ActivityIndicator size="small" color="#fff" />
+      ) : (
+        <Text style={styles.buttonText}>{title}</Text>
+      )}
     </TouchableOpacity>
   );
 }
@@ -41,6 +47,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 8,
     paddingHorizontal: 16,
+    flexDirection: 'row',
   },
   buttonText: {
     color: '#fff',

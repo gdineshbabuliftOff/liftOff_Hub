@@ -38,7 +38,7 @@ export default function AuthLayout({ children, title }: Props) {
         >
           <View style={styles.card}>
           <Image
-                  source={require('@/assets/images/logo.png')} // Replace with your image path
+                  source={require('@/assets/images/logo.png')}
                   style={styles.logo}
                   resizeMode="contain"
                 />
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
     fontFamily: Fonts.LatoRegular,
   },
   keyboardAvoiding: {

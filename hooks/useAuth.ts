@@ -1,13 +1,18 @@
+import { getLocalData } from '@/utils/localData';
 import { useEffect, useState } from 'react';
-import { isLoggedIn } from '@/utils/auth';
 
 export function useAuthStatus() {
   const [status, setStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
 
   useEffect(() => {
-    const check = async () => {
-      const ok = await isLoggedIn();
-      setStatus(ok ? 'authenticated' : 'unauthenticated');
+    const check = async() => {
+      const localdata = await getLocalData();
+      const token = localdata?.token;
+      if (token) {
+        setStatus('authenticated');
+      } else {
+        setStatus('unauthenticated');
+      }
     };
 
     check();
