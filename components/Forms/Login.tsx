@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
-import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Pressable, Text, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 
-import AuthLayout from '@/components/layouts/AuthLayout';
+import AuthLayout from '@/components/Layouts/AuthLayout';
+import { Routes } from '@/constants/enums';
+import { UserData } from '@/constants/interface';
 import { loginSchema } from '@/constants/Validations';
+import { openURL } from '@/utils/navigation';
+import { getActiveStepAndRedirect } from '@/utils/navigationHelper';
+import { loginUser } from '../Api/authentication';
+import PrimaryButton from '../Atoms/Buttons/PrimaryButton';
 import FormInput from '../Atoms/Input/FormInput';
 import loginStyles from '../Styles/LoginStyles';
-import PrimaryButton from '../Atoms/Buttons/PrimaryButton';
-import { loginUser } from '../Api/authentication';
-import { getActiveStepAndRedirect } from '@/utils/navigationHelper';
-import { UserData } from '@/constants/interface';
-import { openURL } from '@/utils/navigation';
-import { Routes } from '@/constants/enums';
 
 export default function LoginPage() {
   const {

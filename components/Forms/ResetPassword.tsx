@@ -1,18 +1,18 @@
-import { View, Text } from 'react-native';
-import { useForm } from 'react-hook-form';
+import AuthLayout from '@/components/Layouts/AuthLayout';
 import { yupResolver } from '@hookform/resolvers/yup';
-import Toast from 'react-native-toast-message';
-import AuthLayout from '@/components/layouts/AuthLayout';
-import { useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Text, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 
-import { resetPasswordSchema } from '@/constants/Validations';
-import FormInput from '../Atoms/Input/FormInput';
-import PrimaryButton from '../Atoms/Buttons/PrimaryButton';
-import loginStyles from '../Styles/LoginStyles';
-import { resetUserPassword } from '../Api/authentication';
-import { openURL } from '@/utils/navigation';
 import { Routes } from '@/constants/enums';
+import { resetPasswordSchema } from '@/constants/Validations';
+import { openURL } from '@/utils/navigation';
+import { resetUserPassword } from '../Api/authentication';
+import PrimaryButton from '../Atoms/Buttons/PrimaryButton';
+import FormInput from '../Atoms/Input/FormInput';
+import loginStyles from '../Styles/LoginStyles';
 
 export default function ResetPasswordPage() {
   const {

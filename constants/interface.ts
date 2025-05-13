@@ -25,3 +25,26 @@ export interface UserData {
     exp?: number;
   }
   
+  export interface contactsProps {
+    employeeProfiles: any;
+  }
+
+export interface PolicyApiResponse {
+  signedUrl: string;
+  fileName: string;
+  lastUpdated: string;
+  progress: number;
+  newPolicy: boolean;
+}
+
+export interface Notification {
+  fullName: string;
+  email: string;
+  type: 'birthday' | 'anniversary';
+  years?: number;
+}
+
+export interface NotificationGroup {
+  date: string;
+  events: Notification[];
+}

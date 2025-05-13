@@ -1,17 +1,16 @@
-import { View, Text } from 'react-native';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import Toast from 'react-native-toast-message';
-import AuthLayout from '@/components/layouts/AuthLayout';
-import { router } from 'expo-router';
-import FormInput from '../Atoms/Input/FormInput';
-import PrimaryButton from '../Atoms/Buttons/PrimaryButton';
-import { sendResetPasswordLink } from '../Api/authentication';
-import { forgotPasswordSchema } from '@/constants/Validations';
-import loginStyles from '../Styles/LoginStyles';
-import { useState } from 'react';
-import { openURL } from '@/utils/navigation';
+import AuthLayout from '@/components/Layouts/AuthLayout';
 import { Routes } from '@/constants/enums';
+import { forgotPasswordSchema } from '@/constants/Validations';
+import { openURL } from '@/utils/navigation';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Text, View } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { sendResetPasswordLink } from '../Api/authentication';
+import PrimaryButton from '../Atoms/Buttons/PrimaryButton';
+import FormInput from '../Atoms/Input/FormInput';
+import loginStyles from '../Styles/LoginStyles';
 
 export default function ForgotPasswordPage() {
   const {

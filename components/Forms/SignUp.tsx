@@ -1,19 +1,19 @@
-import { View, Text } from 'react-native';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import Toast from 'react-native-toast-message';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import AuthLayout from '@/components/layouts/AuthLayout';
-import { signUpSchema } from '@/constants/Validations';
-import FormInput from '../Atoms/Input/FormInput';
-import PrimaryButton from '../Atoms/Buttons/PrimaryButton';
-import { registerUser } from '../Api/authentication';
-import { UserData } from '@/constants/interface';
-import { jwtDecode } from 'jwt-decode';
-import loginStyles from '../Styles/LoginStyles';
-import { useState } from 'react';
-import { openURL } from '@/utils/navigation';
+import AuthLayout from '@/components/Layouts/AuthLayout';
 import { Routes } from '@/constants/enums';
+import { UserData } from '@/constants/interface';
+import { signUpSchema } from '@/constants/Validations';
+import { openURL } from '@/utils/navigation';
+import { yupResolver } from '@hookform/resolvers/yup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from 'jwt-decode';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Text, View } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { registerUser } from '../Api/authentication';
+import PrimaryButton from '../Atoms/Buttons/PrimaryButton';
+import FormInput from '../Atoms/Input/FormInput';
+import loginStyles from '../Styles/LoginStyles';
 
 export default function SignUpPage() {
   const {
