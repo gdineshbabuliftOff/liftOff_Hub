@@ -10,4 +10,8 @@ export const ENDPOINTS = {
     DELETE_POLICY: '/admin/policy-delete',
     NOTIFICATION: '/notifications/user-anniversaries-birthdays',
     PROFILE: '/profile/',
+    ADMIN_DASHBOARD: '/admin/users',
+    SEND_REMINDER: '/admin/send-reminder',
+    EDIT_RIGHTS: '/admin/',
+    DELETE_USER_PERMANENTLY: '/admin/user/'
   };

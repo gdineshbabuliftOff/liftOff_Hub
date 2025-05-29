@@ -3,10 +3,14 @@ import { ENDPOINTS } from "@/utils/endPoints";
 import { getLocalData } from "@/utils/localData";
 import apiClient from "./apiClient";
 
-type ParsedUserData = {
+interface UserData {
   userId: string;
-  [key: string]: any;
-};
+}
+
+interface SendReminderParams {
+  email: string;
+  name: string;
+}
 
 export const fetchAllEmployees = async ({
 search = '',
@@ -40,7 +44,7 @@ export const getPolicies = async (): Promise<PolicyApiResponse[]> => {
 
 export const deletePolicy = async (fileName: string) => {
   const localData = await getLocalData();
-  const userdata = localData?.userData;
+  const userdata = localData?.userData as UserData| undefined;
   const userid = userdata?.userId;
   const token = localData?.token;
   return await apiClient(`${ENDPOINTS.DELETE_POLICY}`, {
@@ -62,4 +66,76 @@ export const BirthDayAnniversary = async () => {
       return response; // Return NotificationGroup[] as per the API response
     }
   };
-  
+
+export const fetchEmployeesData = async (
+  currentPage: number,
+  searchTerm: string,
+  limit: number,
+  sort: string,
+  direction: string,
+) => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  const response = await apiClient(
+    `${ENDPOINTS.ADMIN_DASHBOARD}?page=${currentPage}&limit=${limit}&sortBy=${sort}&sortOrder=${direction}&search=${searchTerm}`,
+    {
+      method: 'GET',
+      token: token,
+    },
+  );
+  return response;
+};
+
+export const sendReminder = async ({ email, name }: SendReminderParams) => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  return await apiClient(ENDPOINTS.SEND_REMINDER, {
+    method: 'POST',
+    body: { email, name },
+    token: token,
+  });
+};
+
+export const enableEditRights = async (userId: string) => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  return apiClient(
+    `${ENDPOINTS.EDIT_RIGHTS}${userId}/edit-rights`,
+    {
+      method: 'PATCH',
+      token: token,
+    },
+  );
+};
+
+export const disableEditRights = async (userId: string) => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  return await apiClient(
+    `${ENDPOINTS.EDIT_RIGHTS}${userId}/edit-rights`,
+    {
+      method: 'PATCH',
+      token: token,
+    },
+  );
+};
+
+export const deleteUser = async ({ userId }: { userId: string }) => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  return await apiClient(`${ENDPOINTS.EDIT_RIGHTS}${userId}`, {
+    method: 'DELETE',
+    body: { userId },
+    token: token,
+  });
+};
+
+export const deleteUserPermanently = async ({ userId }: { userId: string }) => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  return await apiClient(`${ENDPOINTS.DELETE_USER_PERMANENTLY}${userId}`, {
+    method: 'DELETE',
+    body: { userId },
+    token: token,
+  });
+};

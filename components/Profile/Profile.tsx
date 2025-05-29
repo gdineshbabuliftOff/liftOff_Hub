@@ -282,7 +282,6 @@ export default function ProfileScreen() {
 
   const { employee, documents, bankAccount, photoUrl } = profile;
   const employeeDetails = profile?.employeeDetails || employee;
-  console.log(profile);
 
   const renderField = (label: string, value: string | number | null | undefined) => (
     <View style={styles.fieldContainer}>
@@ -303,7 +302,6 @@ export default function ProfileScreen() {
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
       {children}
-      <View style={styles.hr} />
     </View>
   );
 
@@ -388,6 +386,9 @@ export default function ProfileScreen() {
         ])}
         {renderRow([
             renderField('Permanent Address', profile?.permanentAddress),
+        ])}
+        {renderRow([
+            renderField('About You', profile?.bio),
         ])}
         </Section>
 
