@@ -5,6 +5,7 @@ import Toast from 'react-native-toast-message';
 export const removeAuthToken = async () => {
   try {
     await AsyncStorage.removeItem('userData');
+    await AsyncStorage.removeItem('token');
     Toast.show({
       type: 'info',
       text1: 'Logged Out',

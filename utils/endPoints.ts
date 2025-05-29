@@ -6,5 +6,8 @@ export const ENDPOINTS = {
     LOGOUT: '/auth/logout',
     CONTACTS: '/profile/contacts',
     POLICYS: '/profile/policy',
+    UPLOAD_POLICY: '/admin/policy-upload',
+    DELETE_POLICY: '/admin/policy-delete',
     NOTIFICATION: '/notifications/user-anniversaries-birthdays',
+    PROFILE: '/profile/',
   };

@@ -30,7 +30,7 @@ export const getActiveStepAndRedirect = async (user: UserData) => {
 
   if (role === Roles.ADMIN) {
     targetRoute = Routes.DASHBOARD;
-  } else if (role === Roles.USER && joineeType === JoineeTypes.NEW) {
+  } else if (role === Roles.EMPLOYEE && joineeType === JoineeTypes.NEW) {
     if (!editRights || allFormsFilled) {
       targetRoute = Routes.PROFILE;
     } else if (!form1Filled) {
@@ -46,7 +46,7 @@ export const getActiveStepAndRedirect = async (user: UserData) => {
       targetRoute = Routes.FORM4;
       activeStep = 3;
     }
-  } else if (role === Roles.USER && joineeType === JoineeTypes.EXISTING) {
+  } else if (role === Roles.EMPLOYEE && joineeType === JoineeTypes.EXISTING) {
     if (!editRights || allFormsFilled || form1Filled) {
       targetRoute = Routes.PROFILE;
     } else {

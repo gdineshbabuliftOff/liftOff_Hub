@@ -1,19 +1,20 @@
+import { openURL } from '@/utils/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
+import { Image } from 'expo-image';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
+  RefreshControl,
   Text,
-  View
+  View,
 } from 'react-native';
 import { BirthDayAnniversary } from '../Api/adminApi';
 import Card from '../Layouts/Card';
 import { styles } from '../Styles/Notification';
-
 
 interface Notification {
   fullName: string;
@@ -30,23 +31,40 @@ interface NotificationGroup {
 const NotificationsSection = () => {
   const [notifications, setNotifications] = useState<NotificationGroup[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
 
   useEffect(() => {
     fetchNotifications();
-    AsyncStorage.setItem('lastSeenNotification', dayjs().format('YYYY-MM-DD'));
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const markNotificationsAsSeen = async () => {
+        const today = dayjs().format('YYYY-MM-DD');
+        await AsyncStorage.setItem('lastSeenNotification', today);
+      };
+
+      markNotificationsAsSeen();
+    }, [])
+  );
 
   const fetchNotifications = async () => {
     try {
-      setLoading(true);
+      if (!refreshing) setLoading(true);
       const data: NotificationGroup[] = await BirthDayAnniversary() || [];
       setNotifications(data);
     } catch (error) {
       console.error('Failed to fetch notifications', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchNotifications();
   };
 
   const getMessage = (item: Notification, date: string) => {
@@ -84,7 +102,7 @@ const NotificationsSection = () => {
     }
     const day = dayjs(date).date();
     const month = dayjs(date).format('MMM');
-    return `${day}${getOrdinalSuffix(day)} ${month}`; // e.g., 12th May
+    return `${day}${getOrdinalSuffix(day)} ${month}`;
   };
 
   const renderNotificationItem = ({ item, date }: { item: Notification, date: string }) => (
@@ -94,13 +112,13 @@ const NotificationsSection = () => {
         item.type === 'birthday' ? styles.birthday : styles.anniversary,
       ]}
       onPress={() => {
-        // Navigate or handle press if needed
+        openURL(`/contacts?email=${item?.email}`);
       }}
     >
       <Image
         source={
           item.type === 'birthday'
-            ? require('../../assets/videos/birthday1.gif')
+            ? require('../../assets/videos/birthday2.gif')
             : require('../../assets/videos/anniversary.gif')
         }
         style={styles.icon}
@@ -118,13 +136,16 @@ const NotificationsSection = () => {
         topNavBackgroundColor="fff"
         topNavContent={<Text style={styles.header}>Notifications</Text>}
       >
-        {loading ? (
+        {loading && !refreshing ? (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="#000" />
           </View>
         ) : (
           <FlatList
             data={notifications}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
             renderItem={({ item }) => (
               <View style={styles.dateGroup}>
                 <Text style={styles.groupDate}>{formatDate(item.date)}</Text>
@@ -143,9 +164,8 @@ const NotificationsSection = () => {
                 <Image
                   source={require('../../assets/images/noemployee.png')}
                   style={styles.noEmployeeImage}
-                  resizeMode="contain"
                 />
-                <Text style={styles.emptyText}>There is No events for the next 7 days.</Text>
+                <Text style={styles.emptyText}>There are no events for the next 7 days.</Text>
               </View>
             }
           />

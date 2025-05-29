@@ -34,15 +34,16 @@ export default Card;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    zIndex: 0,
   },
   topNav: {
     height: 60,
     justifyContent: 'center',
     paddingHorizontal: 16,
+    zIndex: 0,
   },
   body: {
     flex: 1,
-    padding: 16,
     paddingBottom: 70,
   },
 });

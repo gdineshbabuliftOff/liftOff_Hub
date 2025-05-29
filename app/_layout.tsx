@@ -3,6 +3,7 @@ import { Redirect, Slot, usePathname } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 const publicRoutes = ['/login', '/signUp', '/reset-password', '/forgot-password'];
 
@@ -46,6 +47,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1 }}>
+        <Toast />
         <Slot />
       </SafeAreaView>
     </SafeAreaProvider>

@@ -8,3 +8,31 @@ export const formatDate = (dateStr: string | null) => {
       d % 10 === 3 && d !== 13 ? 'rd' : 'th';
     return `${date.toLocaleString('en-US', { month: 'short' })} ${day}${suffix(day)} ${date.getFullYear()}`;
   };
+
+ export const formatDateFull = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'N/A';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+  
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+  
+    const month = months[date.getMonth()];
+    const day = date.getDate();
+    const year = date.getFullYear();
+  
+    // Add the appropriate suffix to the day
+    let daySuffix = 'th';
+    if (day % 10 === 1 && day !== 11) {
+      daySuffix = 'st';
+    } else if (day % 10 === 2 && day !== 12) {
+      daySuffix = 'nd';
+    } else if (day % 10 === 3 && day !== 13) {
+      daySuffix = 'rd';
+    }
+  
+    return `${month} ${day}${daySuffix} ${year}`;
+  };

@@ -1,16 +1,18 @@
 import { formatDate } from '@/constants/common';
 import { EmployeeProfile } from '@/constants/types';
+import { openURL } from '@/utils/navigation';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    RefreshControl,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  FlatList,
+  Image,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { fetchAllEmployees } from '../Api/adminApi';
@@ -26,6 +28,10 @@ const ContactsScreen = () => {
   const [searchText, setSearchText] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const emptyImage = require('../..//assets/images/noemployee.png');
+
+  const { email } = useLocalSearchParams();
+  const normalizedEmail = typeof email === 'string' ? email.toLowerCase() : '';
 
   const loadEmployees = async () => {
     try {
@@ -49,6 +55,23 @@ const ContactsScreen = () => {
   useEffect(() => {
     loadEmployees();
   }, []);
+
+  // ✅ Update selected employee based on email whenever email or employees changes
+  useEffect(() => {
+    if (normalizedEmail && employees.length > 0) {
+      const cleanedEmail = normalizedEmail.replace(/\s+/g, '+').toLowerCase();
+      const match = employees.find((emp: EmployeeProfile) =>
+        emp.email.toLowerCase() === cleanedEmail
+      );
+      if (match) {
+        setSelectedEmployee(match);
+      } else {
+        setSelectedEmployee(null);
+      }
+    } else if (!normalizedEmail) {
+      setSelectedEmployee(null);
+    }
+  }, [normalizedEmail, employees]);
 
   useEffect(() => {
     if (searchText.trim() === '') {
@@ -110,7 +133,10 @@ const ContactsScreen = () => {
         <View style={styles.navBar}>
           <View style={styles.navLeft}>
             {selectedEmployee ? (
-              <TouchableOpacity onPress={() => setSelectedEmployee(null)}>
+              <TouchableOpacity onPress={() => {
+                setSelectedEmployee(null);
+                openURL('/contacts');
+              }}>
                 <Ionicons name="arrow-back" size={24} color="#000" style={{ marginRight: 12 }} />
               </TouchableOpacity>
             ) : (
@@ -147,6 +173,11 @@ const ContactsScreen = () => {
         </View>
       ) : selectedEmployee ? (
         renderDetail(selectedEmployee)
+      ) : filteredEmployees.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Image source={emptyImage} style={styles.emptyImage} />
+          <Text style={styles.emptyText}>No contacts found</Text>
+        </View>
       ) : (
         <FlatList
           data={filteredEmployees}
@@ -158,6 +189,7 @@ const ContactsScreen = () => {
           }
         />
       )}
+
     </Card>
   );
 };

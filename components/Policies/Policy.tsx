@@ -1,12 +1,14 @@
+import { addPolicy, isAdmin, isEditor } from '@/utils/permissions';
 import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
+import { StorageAccessFramework } from 'expo-file-system';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
   FlatList,
+  Image,
   RefreshControl,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -16,6 +18,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { WebView } from 'react-native-webview';
 import { getPolicies } from '../Api/adminApi';
+import { styles } from '../Styles/PolicyStyles';
 
 type Policy = {
   signedUrl: string;
@@ -30,8 +33,11 @@ const PoliciesScreen = () => {
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false); // New state to track PDF loading
+  const [pdfLoading, setPdfLoading] = useState(false);
   const jumpAnim = useRef(new Animated.Value(0)).current;
+  const [downloading, setDownloading] = useState(false);
+  const [policyAdd, setPolicyAdd] = useState(false);
+  const router = useRouter();
 
   const fetchPolicies = async () => {
     setLoading(true);
@@ -48,6 +54,16 @@ const PoliciesScreen = () => {
 
   useEffect(() => {
     fetchPolicies();
+  }, []);
+
+  useEffect(() => {
+    const checkPermissions = async () => {
+      const admin = await isAdmin();
+      const editor = await isEditor();
+      const canAdd = await addPolicy();
+      setPolicyAdd(admin || (editor && canAdd));
+    };
+    checkPermissions();
   }, []);
 
   const onRefresh = useCallback(async () => {
@@ -67,7 +83,6 @@ const PoliciesScreen = () => {
     }
   }, [searchText, policies]);
 
-  // Start jumping animation when a policy is selected
   useEffect(() => {
     if (selectedPolicy) {
       Animated.loop(
@@ -89,26 +104,54 @@ const PoliciesScreen = () => {
 
   const downloadFile = async (policy: Policy) => {
     try {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Permission to access media library is required!');
+      setDownloading(true);
+  
+      const fileName = policy.fileName || 'downloaded_file.pdf';
+      const fileUri = FileSystem.cacheDirectory + fileName;
+  
+      // Step 1: Download file to cache
+      const downloadResult = await FileSystem.downloadAsync(policy.signedUrl, fileUri);
+  
+      if (!downloadResult || !downloadResult.uri) {
+        alert('Failed to download file.');
         return;
       }
-
-      const fileUri = FileSystem.documentDirectory + policy.fileName;
-      const downloadedFile = await FileSystem.downloadAsync(
-        policy.signedUrl,
-        fileUri
+  
+      // Step 2: Ask user to pick folder using SAF (Android only)
+      const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+      if (!permissions.granted) {
+        alert('Permission denied to access storage.');
+        return;
+      }
+  
+      // Step 3: Read the downloaded file as base64
+      const base64 = await FileSystem.readAsStringAsync(downloadResult.uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+  
+      // Step 4: Create file in chosen folder and write contents
+      const newUri = await StorageAccessFramework.createFileAsync(
+        permissions.directoryUri,
+        fileName,
+        'application/pdf'
       );
-
-      const asset = await MediaLibrary.createAssetAsync(downloadedFile.uri);
-      await MediaLibrary.createAlbumAsync('Download', asset, false);
-      alert('Download completed!');
-    } catch (err) {
-      console.error('Download error:', err);
+  
+      if (newUri) {
+        await FileSystem.writeAsStringAsync(newUri, base64, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        alert('File saved successfully!');
+      } else {
+        alert('Failed to create file in selected directory.');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
       alert('Failed to download file.');
+    } finally {
+      setDownloading(false);
     }
   };
+  
 
   const renderPolicy = ({ item }: { item: Policy }) => (
     <TouchableOpacity style={styles.item} onPress={() => setSelectedPolicy(item)}>
@@ -128,7 +171,7 @@ const PoliciesScreen = () => {
         </Text>
       </View>
 
-      {pdfLoading && ( // Conditionally render the loader when the PDF is loading
+      {pdfLoading && (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#000" />
         </View>
@@ -141,8 +184,8 @@ const PoliciesScreen = () => {
         style={{ flex: 1 }}
         originWhitelist={['*']}
         startInLoadingState={true}
-        onLoadStart={() => setPdfLoading(true)} // Show loader when loading starts
-        onLoadEnd={() => setPdfLoading(false)} // Hide loader when loading ends
+        onLoadStart={() => setPdfLoading(true)}
+        onLoadEnd={() => setPdfLoading(false)}
       />
 
       <Animated.View
@@ -153,8 +196,12 @@ const PoliciesScreen = () => {
           },
         ]}
       >
-        <TouchableOpacity onPress={() => downloadFile(policy)}>
-          <MaterialIcons name="file-download" size={32} color="#000" />
+        <TouchableOpacity onPress={() => downloadFile(policy)} disabled={downloading}>
+          {downloading ? (
+            <ActivityIndicator size="small" color="#000" />
+          ) : (
+            <MaterialIcons name="file-download" size={32} color="#000" />
+          )}
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -192,85 +239,38 @@ const PoliciesScreen = () => {
         </View>
       </View>
 
-      <FlatList
-        data={filteredPolicies}
-        keyExtractor={(item) => item.fileName}
-        renderItem={renderPolicy}
-        contentContainerStyle={styles.list}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      />
+      {filteredPolicies.length === 0 ? (
+        <View style={{ alignItems: 'center', flex: 1, marginTop: 50 }}>
+          <Image
+            source={require('../../assets/images/noemployee.png')}
+            style={{ width: 150, height: 150, resizeMode: 'contain' }}
+          />
+          <Text style={{ marginTop: 5, fontSize: 16, color: '#666' }}>
+            No policies found
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredPolicies}
+          keyExtractor={(item) => item.fileName}
+          renderItem={renderPolicy}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      )}
+
+      {policyAdd && (
+        <TouchableOpacity
+          onPress={() => router.push('/managePolicy')}
+          style={styles.fab}
+        >
+          <Ionicons name="add" size={28} color="#fff" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  navBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    backgroundColor: '#fff',
-    height: 60,
-  },
-  navTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
-    flex: 1,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    backgroundColor: '#f1f1f1',
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    gap: 6,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#000',
-  },
-  list: {
-    padding: 12,
-  },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
-    marginBottom: 10,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-  fileName: {
-    fontSize: 16,
-    color: '#222',
-    fontWeight: '500',
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  downloadButton: {
-    position: 'absolute',
-    bottom: 80,
-    right: 10,
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 50,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-});
 
 export default PoliciesScreen;

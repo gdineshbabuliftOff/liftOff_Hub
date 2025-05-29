@@ -96,4 +96,19 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 50,
   },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: 40,
+  },
+  emptyImage: {
+    width: 150,
+    height: 150,
+    resizeMode: 'contain',
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+  },  
 });

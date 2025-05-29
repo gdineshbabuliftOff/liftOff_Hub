@@ -48,3 +48,56 @@ export interface NotificationGroup {
   date: string;
   events: Notification[];
 }
+
+export interface UserData {
+  userId: number;
+}
+
+export interface LocalUserData {
+  token: string;
+  activeStep: number;
+  userData: UserData;
+}
+
+export interface EmployeeDetailsUtils {
+  email: string;
+  status: string;
+  employeeCode: string;
+  designation: string;
+  editRights: boolean;
+  joineeType: string;
+  firstName: string;
+  lastName: string;
+  photoUrl?: string;
+  dateOfBirth: string;
+  gender: string;
+  phone: string;
+  fatherName: string;
+  dateOfJoining: string;
+  lastWorkingDayOfPreviousOrg?: string;
+  aadharCard: string;
+  panCard: string;
+  uan?: string;
+  currentAddress: string;
+  permanentAddress: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  bloodGroup: string;
+  bankFullName: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  branch: string;
+  documents: Document[];
+  allFieldsFilled: boolean;
+  bio: string;
+  bankAccount: any;
+  employeeDetails: any;
+}
+
+export interface Document {
+  src: string;
+  alt: string;
+  label: string;
+  downloadUrl: string;
+}
