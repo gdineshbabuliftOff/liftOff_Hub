@@ -13,5 +13,7 @@ export const ENDPOINTS = {
     ADMIN_DASHBOARD: '/admin/users',
     SEND_REMINDER: '/admin/send-reminder',
     EDIT_RIGHTS: '/admin/',
-    DELETE_USER_PERMANENTLY: '/admin/user/'
+    DELETE_USER_PERMANENTLY: '/admin/user/',
+    ADD_NEW_EMPLOYEE: '/admin/signup-mail',
+    DOWNLOAD_EMPLOYEE_DETAILS: '/admin/download-data/'
   };

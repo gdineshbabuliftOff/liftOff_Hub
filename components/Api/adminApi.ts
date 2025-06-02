@@ -1,6 +1,8 @@
+import { employeeDetailsHeader } from "@/constants/common";
 import { contactsProps, NotificationGroup, PolicyApiResponse } from "@/constants/interface";
 import { ENDPOINTS } from "@/utils/endPoints";
 import { getLocalData } from "@/utils/localData";
+import * as FileSystem from 'expo-file-system';
 import apiClient from "./apiClient";
 
 interface UserData {
@@ -138,4 +140,112 @@ export const deleteUserPermanently = async ({ userId }: { userId: string }) => {
     body: { userId },
     token: token,
   });
+};
+
+
+export const sendSignupMail = async (
+  employeeCode: string,
+  firstName: string,
+  lastName: string,
+  dateOfJoining: string,
+  email: string,
+  designation: string,
+  status: string,
+  joineeType: string,
+  endPoint: string,
+  request: any,
+  permissions: string[],
+) => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  return apiClient(endPoint, {
+    method: request,
+    body: {
+      employeeCode,
+      firstName,
+      lastName,
+      dateOfJoining,
+      email,
+      designation,
+      status,
+      joineeType,
+      permissions,
+    },
+    token: token,
+  });
+};
+
+export const resignationDate = async (userId: string, date: string) => {
+   const localdata = await getLocalData();
+  const token = localdata?.token;
+  return apiClient(
+    `${ENDPOINTS.EDIT_RIGHTS}${userId}/resignation`,
+    {
+      method: 'PATCH',
+      token: token,
+      body: {
+        resignationDate: date,
+      },
+    },
+  );
+};
+
+export const convertToCSV = (data: any): string => {
+  const employeeDetails = data.employeeDetails || {};
+  const bankDetails = data.bankAccount || {};
+
+  const row = [
+    employeeDetails.employeeCode,
+    `${data.firstName} ${data.lastName}`,
+    data.email,
+    data.dateOfBirth,
+    data.fatherName,
+    employeeDetails.uan,
+    employeeDetails.pan,
+    employeeDetails.aadhar,
+    employeeDetails.dateOfJoining,
+    employeeDetails.designation,
+    data.gender,
+    employeeDetails.lastWorkingDayOfPreviousOrg,
+    bankDetails.name,
+    bankDetails.bankName,
+    bankDetails.branchName,
+    bankDetails.ifscCode,
+    bankDetails.accountNumber,
+  ];
+
+  return [employeeDetailsHeader.join(','), row.join(',')].join('\n');
+};
+
+export const downloadAllDetails = async ({
+  userId,
+  userName,
+}: {
+  userId: string;
+  userName: string;
+}) => {
+  try {
+    const localdata = await getLocalData();
+    const token = localdata?.token;
+
+    const data = await apiClient(`${ENDPOINTS.DOWNLOAD_EMPLOYEE_DETAILS}${userId}`, {
+      method: 'GET',
+      token: token,
+    });
+
+    const csv = convertToCSV(data);
+
+    const fileUri = `${FileSystem.documentDirectory}${userName}.csv`;
+
+    await FileSystem.writeAsStringAsync(fileUri, csv, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    console.log(`File saved at: ${fileUri}`);
+    // You can show a Toast or Alert to inform user file has been saved
+
+  } catch (error) {
+    console.error('Failed to download', error);
+    throw error;
+  }
 };

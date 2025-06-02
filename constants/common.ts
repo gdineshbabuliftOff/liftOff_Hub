@@ -36,3 +36,23 @@ export const formatDate = (dateStr: string | null) => {
   
     return `${month} ${day}${daySuffix} ${year}`;
   };
+
+  export const employeeDetailsHeader = [
+  'Emp Code',
+  'Employee Name',
+  'email ID',
+  'Date of Birth (dd/mm/yyyy)',
+  'Fathers Name',
+  'PF UAN No',
+  'PAN No',
+  'Adhar Card No',
+  'Date of Hire (dd/mm/yyyy)',
+  'Designation',
+  'Gender',
+  'DOL from Previous Employment ',
+  'Name as in bank AC',
+  'Bank Name',
+  'Branch Name',
+  'IFSC Code',
+  'Bank A/c Number',
+];
