@@ -95,9 +95,56 @@ export interface EmployeeDetailsUtils {
   employeeDetails: any;
 }
 
-export interface Document {
-  src: string;
-  alt: string;
-  label: string;
-  downloadUrl: string;
+export interface Employee {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  employeeCode: string;
+  status: string;
+  designation?: string;
+  dateOfJoining?: string;
+  photoUrl?: string;
+  editRights: boolean;
+  joineeType?: string;
+  allFieldsFilled?: boolean;
+}
+
+export interface EmployeeFormData {
+  employeeCode: string;
+  firstName: string;
+  lastName: string;
+  dateOfJoining: string;
+  email: string;
+  designation: string;
+  status: 'Fresher' | 'Experienced' | string;
+  joineeType: 'NEW' | 'EXISTING';
+}
+
+export const initialFormData: EmployeeFormData = {
+  employeeCode: '',
+  firstName: '',
+  lastName: '',
+  dateOfJoining: '',
+  email: '',
+  designation: '',
+  status: 'Fresher',
+  joineeType: 'NEW',
+};
+
+export interface FormErrors {
+  employeeCode?: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfJoining?: string;
+  email?: string;
+  designation?: string;
+  status?: string;
+  joineeType?: string;
+  general?: string;
+}
+
+export interface EmployeesApiResponse {
+  data: Employee[];
+  total: number;
 }

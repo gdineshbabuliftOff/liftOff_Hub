@@ -56,3 +56,42 @@ export const formatDate = (dateStr: string | null) => {
   'IFSC Code',
   'Bank A/c Number',
 ];
+
+export const SORTABLE_FIELDS = [
+  { key: 'userId', label: 'ID' },
+  { key: 'email', label: 'Email' },
+  { key: 'firstName', label: 'Name' },
+];
+
+export const DEFAULT_LIMIT = 100;
+export const ITEMS_PER_PAGE_OPTIONS = [100, 200, 500];
+
+export const MENU_ACTIONS = {
+  REMINDER_EMAIL: 'Send Reminder',
+  TOGGLE_EDIT_RIGHTS: 'Toggle Edit Rights',
+  DOWNLOAD_DETAILS: 'Download Details',
+  DOWNLOAD_DOCUMENTS: 'Download Documents',
+  EDIT_USER: 'Edit User',
+  DELETE_USER: 'Deactivate User',
+  DELETE_USER_PERMANENTLY: 'Delete User Permanently',
+};
+
+export const MENU_ACTION_ICONS: { [key: string]: string } = {
+  [MENU_ACTIONS.REMINDER_EMAIL]: 'email-send-outline',
+  [MENU_ACTIONS.TOGGLE_EDIT_RIGHTS]: 'account-edit-outline',
+  [MENU_ACTIONS.DOWNLOAD_DETAILS]: 'download-circle-outline',
+  [MENU_ACTIONS.DOWNLOAD_DOCUMENTS]: 'folder-download-outline',
+  [MENU_ACTIONS.EDIT_USER]: 'account-cog-outline',
+  [MENU_ACTIONS.DELETE_USER]: 'account-cancel-outline',
+  [MENU_ACTIONS.DELETE_USER_PERMANENTLY]: 'trash-can-outline',
+};
+
+export const ALL_MENU_ITEMS_ORDERED = [
+  MENU_ACTIONS.REMINDER_EMAIL,
+  MENU_ACTIONS.TOGGLE_EDIT_RIGHTS,
+  MENU_ACTIONS.DOWNLOAD_DETAILS,
+  MENU_ACTIONS.DOWNLOAD_DOCUMENTS,
+  MENU_ACTIONS.EDIT_USER,
+  MENU_ACTIONS.DELETE_USER,
+  MENU_ACTIONS.DELETE_USER_PERMANENTLY,
+];

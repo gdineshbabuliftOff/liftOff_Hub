@@ -15,5 +15,6 @@ export const ENDPOINTS = {
     EDIT_RIGHTS: '/admin/',
     DELETE_USER_PERMANENTLY: '/admin/user/',
     ADD_NEW_EMPLOYEE: '/admin/signup-mail',
-    DOWNLOAD_EMPLOYEE_DETAILS: '/admin/download-data/'
+    DOWNLOAD_EMPLOYEE_DETAILS: '/admin/download-data/',
+    DOWNLOAD_EMPLOYEE_DOCUMENTS: '/documents/',
   };
