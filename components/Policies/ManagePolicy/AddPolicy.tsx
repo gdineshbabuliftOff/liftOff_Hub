@@ -23,6 +23,29 @@ type Policy = {
   lastUpdated: string;
 };
 
+const paletteV2 = {
+  primaryMain: '#5DBBAD',
+  primaryDark: '#3E9C90',
+  primaryLight: '#A7D7D3',
+  accentMain: '#FCA311',
+  backgroundLight: '#F8F9FA',
+  surface: '#FFFFFF',
+  textPrimaryOnLight: '#4A5568',
+  textSecondaryOnLight: '#6B7280',
+  textDisabled: '#9CA3AF',
+  textPrimaryOnDark: '#FFFFFF',
+  errorMain: '#E53935',
+  warningMain: '#FFB300',
+  successMain: '#43A047',
+  iconDefault: '#8FA3AD',
+  iconSubtle: '#B0BEC5',
+  neutralDark: '#6A7881',
+  neutralLight: '#ECEFF1',
+  neutralMedium: '#9CA3AF',
+  neutralWhite: '#FFFFFF',
+  gradientPrimaryButton: ['#5DBBAD', '#3E9C90'],
+};
+
 export default function AddPolicyScreen() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [fileName, setFileName] = useState('');
@@ -66,7 +89,7 @@ export default function AddPolicyScreen() {
         Toast.show({
           type: 'error',
           text1: 'File too large',
-          text2: 'Please upload a file smaller than 10MB',
+          text2: `Please upload a file smaller than ${MAX_FILE_SIZE_MB}MB`,
           position: 'bottom',
         });
         return;
@@ -137,7 +160,7 @@ export default function AddPolicyScreen() {
 
   const handleCancelUpload = async () => {
     cancelCurrentUpload();
-    await deletePolicy(fileName);
+    await deletePolicy(fileName); // Assuming you want to delete the partially uploaded file
     Toast.show({
       type: 'error',
       text1: `${fileName} Upload canceled`,
@@ -160,12 +183,12 @@ export default function AddPolicyScreen() {
         paddingVertical: 12,
         paddingHorizontal: 10,
         borderBottomWidth: 1,
-        borderColor: '#eee',
-        backgroundColor: '#fff',
+        borderColor: paletteV2.neutralLight,
+        backgroundColor: paletteV2.surface,
       }}
     >
-      <Text style={{ flex: 1, fontSize: 13 }}>{item.fileName}</Text>
-      <Text style={{ flex: 1, marginLeft: 15, fontSize: 13 }}>
+      <Text style={{ flex: 1, fontSize: 13, color: paletteV2.textPrimaryOnLight }}>{item.fileName}</Text>
+      <Text style={{ flex: 1, marginLeft: 15, fontSize: 13, color: paletteV2.textSecondaryOnLight }}>
         {new Date(item.lastUpdated).toLocaleDateString()}
       </Text>
       <TouchableOpacity
@@ -173,9 +196,9 @@ export default function AddPolicyScreen() {
         style={{ paddingHorizontal: 6 }}
       >
         {isDeleting === item.fileName ? (
-          <ActivityIndicator size="small" color="orange" />
+          <ActivityIndicator size="small" color={paletteV2.accentMain} />
         ) : (
-          <Ionicons name="trash" size={20} color="red" />
+          <Ionicons name="trash" size={20} color={paletteV2.errorMain} />
         )}
       </TouchableOpacity>
     </View>
@@ -183,13 +206,13 @@ export default function AddPolicyScreen() {
 
   return (
     <Card
-      topNavBackgroundColor="#f0f0f0"
+      topNavBackgroundColor={paletteV2.backgroundLight}
       topNavContent={
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => router.push('/policy')}>
-            <Ionicons name="arrow-back" size={24} color="black" />
+            <Ionicons name="arrow-back" size={24} color={paletteV2.textPrimaryOnLight} />
           </TouchableOpacity>
-          <Text style={{ fontSize: 20, marginLeft: 12, fontWeight: '600' }}>
+          <Text style={{ fontSize: 20, marginLeft: 12, fontWeight: '600', color: paletteV2.textPrimaryOnLight }}>
             Upload Policy
           </Text>
         </View>
@@ -200,7 +223,7 @@ export default function AddPolicyScreen() {
           onPress={pickFile}
           disabled={isUploading}
           style={{
-            backgroundColor: '#000',
+            backgroundColor: paletteV2.primaryMain,
             paddingVertical: 14,
             paddingHorizontal: 24,
             borderRadius: 30,
@@ -211,11 +234,11 @@ export default function AddPolicyScreen() {
           }}
         >
           {isUploading ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={paletteV2.neutralWhite} />
           ) : (
-            <Ionicons name="cloud-upload-outline" size={22} color="white" />
+            <Ionicons name="cloud-upload-outline" size={22} color={paletteV2.neutralWhite} />
           )}
-          <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+          <Text style={{ color: paletteV2.neutralWhite, fontSize: 16, fontWeight: '600' }}>
             {isUploading ? 'Uploading...' : 'Choose File to Upload'}
           </Text>
         </TouchableOpacity>
@@ -225,7 +248,7 @@ export default function AddPolicyScreen() {
         style={{
           marginTop: 40,
           borderWidth: 1,
-          borderColor: '#ccc',
+          borderColor: paletteV2.neutralMedium,
           borderRadius: 8,
           overflow: 'hidden',
         }}
@@ -233,16 +256,16 @@ export default function AddPolicyScreen() {
         <View
           style={{
             flexDirection: 'row',
-            backgroundColor: '#f8f8f8',
+            backgroundColor: paletteV2.backgroundLight,
             paddingVertical: 12,
             paddingHorizontal: 10,
             borderBottomWidth: 1,
-            borderColor: '#ccc',
+            borderColor: paletteV2.neutralMedium,
           }}
         >
-          <Text style={{ flex: 2, fontWeight: 'bold', fontSize: 13 }}>Policy Name</Text>
-          <Text style={{ width: 100, fontWeight: 'bold', fontSize: 13 }}>Last Updated</Text>
-          <Text style={{ width: 60, fontWeight: 'bold', textAlign: 'center', fontSize: 13 }}>Action</Text>
+          <Text style={{ flex: 2, fontWeight: 'bold', fontSize: 13, color: paletteV2.textPrimaryOnLight }}>Policy Name</Text>
+          <Text style={{ width: 100, fontWeight: 'bold', fontSize: 13, color: paletteV2.textPrimaryOnLight }}>Last Updated</Text>
+          <Text style={{ width: 60, fontWeight: 'bold', textAlign: 'center', fontSize: 13, color: paletteV2.textPrimaryOnLight }}>Action</Text>
         </View>
 
         {isUploading && (
@@ -253,16 +276,16 @@ export default function AddPolicyScreen() {
               paddingVertical: 15,
               paddingHorizontal: 10,
               borderBottomWidth: 1,
-              borderColor: '#eee',
-              backgroundColor: '#fff7e6',
+              borderColor: paletteV2.neutralLight,
+              backgroundColor: paletteV2.warningMain + '1A', // A slight tint for warning
             }}
           >
             <View style={{ flex: 1 }}>
-              <Text style={{ fontWeight: '500', fontSize: 13 }}>{fileName}</Text>
+              <Text style={{ fontWeight: '500', fontSize: 13, color: paletteV2.textPrimaryOnLight }}>{fileName}</Text>
               <CustomProgressBar progress={uploadProgress} />
             </View>
             <TouchableOpacity onPress={handleCancelUpload} style={{ width: 40, alignItems: 'center' }}>
-              <Ionicons name="close-circle-outline" size={20} color="orange" />
+              <Ionicons name="close-circle-outline" size={20} color={paletteV2.accentMain} />
             </TouchableOpacity>
           </View>
         )}
@@ -276,7 +299,7 @@ export default function AddPolicyScreen() {
           ListEmptyComponent={
             isFetching ? (
               <View style={{ padding: 30, alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#007bff" />
+                <ActivityIndicator size="large" color={paletteV2.primaryMain} />
               </View>
             ) : (
               <View style={{ alignItems: 'center', padding: 20 }}>
@@ -284,7 +307,7 @@ export default function AddPolicyScreen() {
                   source={require('../../../assets/images/noemployee.png')}
                   style={{ width: 200, height: 200, resizeMode: 'contain' }}
                 />
-                <Text style={{ marginTop: 12, fontSize: 16, color: '#666' }}>
+                <Text style={{ marginTop: 12, fontSize: 16, color: paletteV2.textSecondaryOnLight }}>
                   No policies found
                 </Text>
               </View>

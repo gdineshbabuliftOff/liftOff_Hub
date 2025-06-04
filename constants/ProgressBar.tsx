@@ -35,7 +35,7 @@ export default function CustomProgressBar({ progress }: Props) {
             outputRange: ['0%', '100%'],
           }),
           height: '100%',
-          backgroundColor: '#000',
+          backgroundColor: '#5DBBAD',
           borderRadius: 5,
         }}
       />

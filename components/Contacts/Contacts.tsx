@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { fetchAllEmployees } from '../Api/adminApi';
+import ProfilePictureModal from '../Dashboard/ProfilePictureModal';
 import Card from '../Layouts/Card';
 import { styles } from '../Styles/ContactStyles';
 
@@ -28,6 +29,8 @@ const ContactsScreen = () => {
   const [searchText, setSearchText] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [isProfileModalVisible, setIsProfileModalVisible] = useState<boolean>(false); // State for modal visibility
+
   const emptyImage = require('../..//assets/images/noemployee.png');
 
   const { email } = useLocalSearchParams();
@@ -56,7 +59,6 @@ const ContactsScreen = () => {
     loadEmployees();
   }, []);
 
-  // ✅ Update selected employee based on email whenever email or employees changes
   useEffect(() => {
     if (normalizedEmail && employees.length > 0) {
       const cleanedEmail = normalizedEmail.replace(/\s+/g, '+').toLowerCase();
@@ -93,6 +95,16 @@ const ContactsScreen = () => {
     await loadEmployees();
   };
 
+  const openProfileModal = () => {
+    if (selectedEmployee) {
+      setIsProfileModalVisible(true);
+    }
+  };
+
+  const closeProfileModal = () => {
+    setIsProfileModalVisible(false);
+  };
+
   const renderEmployee = ({ item }: { item: EmployeeProfile }) => (
     <TouchableOpacity style={styles.employeeItem} onPress={() => setSelectedEmployee(item)}>
       <Image
@@ -112,10 +124,12 @@ const ContactsScreen = () => {
 
   const renderDetail = (emp: EmployeeProfile) => (
     <ScrollView contentContainerStyle={styles.detailContainer}>
-      <Image
-        source={emp.photoUrl ? { uri: emp.photoUrl } : defaultImage}
-        style={styles.detailAvatar}
-      />
+      <TouchableOpacity onPress={openProfileModal}>
+        <Image
+          source={emp.photoUrl ? { uri: emp.photoUrl } : defaultImage}
+          style={styles.detailAvatar}
+        />
+      </TouchableOpacity>
       <DetailRow label="About Me" value={emp.bio || 'N/A'} />
       <DetailRow label="Employee Id" value={emp.employeeCode} />
       <DetailRow label="Email" value={emp.email} />
@@ -135,7 +149,7 @@ const ContactsScreen = () => {
             {selectedEmployee ? (
               <TouchableOpacity onPress={() => {
                 setSelectedEmployee(null);
-                openURL('/contacts');
+                openURL('/contacts'); // Assuming openURL navigates back or clears params
               }}>
                 <Ionicons name="arrow-back" size={24} color="#000" style={{ marginRight: 12 }} />
               </TouchableOpacity>
@@ -190,6 +204,14 @@ const ContactsScreen = () => {
         />
       )}
 
+      {selectedEmployee && ( // Render modal only if an employee is selected
+        <ProfilePictureModal
+          isVisible={isProfileModalVisible}
+          imageUrl={selectedEmployee.photoUrl || null} // Pass the selected employee's photoUrl
+          defaultImage={defaultImage}
+          onClose={closeProfileModal}
+        />
+      )}
     </Card>
   );
 };

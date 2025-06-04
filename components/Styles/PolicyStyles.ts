@@ -4,8 +4,6 @@ export const styles = StyleSheet.create({
     navBar: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 10,
-      backgroundColor: '#fff',
       height: 60,
     },
     navTitle: {
@@ -69,7 +67,7 @@ export const styles = StyleSheet.create({
     },
     fab: {
       position: 'absolute',
-      bottom: 80,
+      bottom: 10,
       right: 10,
       backgroundColor: '#007AFF', // or your preferred color
       width: 60,

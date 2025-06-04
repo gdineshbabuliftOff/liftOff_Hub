@@ -12,13 +12,37 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { WebView } from 'react-native-webview';
 import { getPolicies } from '../Api/adminApi';
-import { styles } from '../Styles/PolicyStyles';
+import Card from '../Layouts/Card';
+import { styles } from '../Styles/PolicyStyles'; // Assuming styles are defined here
+
+const paletteV2 = {
+  primaryMain: '#5DBBAD',
+  primaryDark: '#3E9C90',
+  primaryLight: '#A7D7D3',
+  accentMain: '#FCA311',
+  backgroundLight: '#F8F9FA',
+  surface: '#FFFFFF',
+  textPrimaryOnLight: '#4A5568',
+  textSecondaryOnLight: '#6B7280',
+  textDisabled: '#9CA3AF',
+  textPrimaryOnDark: '#FFFFFF',
+  errorMain: '#E53935',
+  warningMain: '#FFB300',
+  successMain: '#43A047',
+  iconDefault: '#8FA3AD',
+  iconSubtle: '#B0BEC5',
+  neutralDark: '#6A7881',
+  neutralLight: '#ECEFF1',
+  neutralMedium: '#9CA3AF',
+  neutralWhite: '#FFFFFF',
+  gradientPrimaryButton: ['#5DBBAD', '#3E9C90'],
+};
 
 type Policy = {
   signedUrl: string;
@@ -109,27 +133,25 @@ const PoliciesScreen = () => {
       const fileName = policy.fileName || 'downloaded_file.pdf';
       const fileUri = FileSystem.cacheDirectory + fileName;
   
-      // Step 1: Download file to cache
       const downloadResult = await FileSystem.downloadAsync(policy.signedUrl, fileUri);
   
       if (!downloadResult || !downloadResult.uri) {
         alert('Failed to download file.');
+        setDownloading(false);
         return;
       }
   
-      // Step 2: Ask user to pick folder using SAF (Android only)
       const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
       if (!permissions.granted) {
         alert('Permission denied to access storage.');
+        setDownloading(false);
         return;
       }
   
-      // Step 3: Read the downloaded file as base64
       const base64 = await FileSystem.readAsStringAsync(downloadResult.uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
   
-      // Step 4: Create file in chosen folder and write contents
       const newUri = await StorageAccessFramework.createFileAsync(
         permissions.directoryUri,
         fileName,
@@ -155,25 +177,29 @@ const PoliciesScreen = () => {
 
   const renderPolicy = ({ item }: { item: Policy }) => (
     <TouchableOpacity style={styles.item} onPress={() => setSelectedPolicy(item)}>
-      <Ionicons name="document-text-outline" size={24} color="red" style={{ marginRight: 12 }} />
+      <Ionicons name="document-text-outline" size={24} color={paletteV2.primaryMain} style={{ marginRight: 12 }} />
       <Text style={styles.fileName}>{item.fileName}</Text>
     </TouchableOpacity>
   );
 
   const renderPdfViewer = (policy: Policy) => (
-    <View style={{ flex: 1 }}>
-      <View style={styles.navBar}>
-        <TouchableOpacity onPress={() => setSelectedPolicy(null)}>
-          <Ionicons name="arrow-back" size={24} color="#000" style={{ marginRight: 10 }} />
-        </TouchableOpacity>
-        <Text style={styles.navTitle} numberOfLines={1} ellipsizeMode="tail">
-          {policy.fileName}
-        </Text>
-      </View>
-
+    <Card
+      topNavBackgroundColor={paletteV2.surface}
+      topNavContent={
+        <View style={styles.navBar}>
+          <TouchableOpacity onPress={() => setSelectedPolicy(null)}>
+            <Ionicons name="arrow-back" size={24} color={paletteV2.textPrimaryOnLight} style={{ marginRight: 10 }} />
+          </TouchableOpacity>
+          <Text style={styles.navTitle} numberOfLines={1} ellipsizeMode="tail">
+            {policy.fileName}
+          </Text>
+        </View>
+      }
+      fullHeight={true} // Set fullHeight to true for PDF viewer
+    >
       {pdfLoading && (
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#000" />
+          <ActivityIndicator size="large" color={paletteV2.primaryMain} />
         </View>
       )}
 
@@ -198,19 +224,19 @@ const PoliciesScreen = () => {
       >
         <TouchableOpacity onPress={() => downloadFile(policy)} disabled={downloading}>
           {downloading ? (
-            <ActivityIndicator size="small" color="#000" />
+            <ActivityIndicator size="small" color={paletteV2.primaryMain} />
           ) : (
-            <MaterialIcons name="file-download" size={32} color="#000" />
+            <MaterialIcons name="file-download" size={32} color={paletteV2.primaryMain} />
           )}
         </TouchableOpacity>
       </Animated.View>
-    </View>
+    </Card>
   );
 
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#000" />
+        <ActivityIndicator size="large" color={paletteV2.primaryMain} />
       </View>
     );
   }
@@ -218,34 +244,37 @@ const PoliciesScreen = () => {
   return selectedPolicy ? (
     renderPdfViewer(selectedPolicy)
   ) : (
-    <View style={{ flex: 1 }}>
-      <View style={styles.navBar}>
-        <Ionicons name="document" size={22} color="#000" style={{ marginRight: 8 }} />
-        <View style={styles.searchContainer}>
-          <TextInput
-            placeholder="Search"
-            placeholderTextColor="#888"
-            style={styles.searchInput}
-            value={searchText}
-            onChangeText={setSearchText}
-          />
-          {searchText.length > 0 ? (
-            <TouchableOpacity onPress={() => setSearchText('')}>
-              <Ionicons name="close-circle" size={20} color="#888" />
-            </TouchableOpacity>
-          ) : (
-            <Ionicons name="search" size={20} color="#888" />
-          )}
+    <Card
+      topNavBackgroundColor={paletteV2.backgroundLight}
+      topNavContent={
+        <View style={styles.navBar}>
+          <Ionicons name="document" size={22} color={paletteV2.textPrimaryOnLight} style={{ marginRight: 8 }} />
+          <View style={styles.searchContainer}>
+            <TextInput
+              placeholder="Search Policies"
+              placeholderTextColor={paletteV2.textSecondaryOnLight}
+              style={styles.searchInput}
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+            {searchText.length > 0 ? (
+              <TouchableOpacity onPress={() => setSearchText('')}>
+                <Ionicons name="close-circle" size={20} color={paletteV2.iconSubtle} />
+              </TouchableOpacity>
+            ) : (
+              <Ionicons name="search" size={20} color={paletteV2.iconSubtle} />
+            )}
+          </View>
         </View>
-      </View>
-
+      }
+    >
       {filteredPolicies.length === 0 ? (
         <View style={{ alignItems: 'center', flex: 1, marginTop: 50 }}>
           <Image
             source={require('../../assets/images/noemployee.png')}
-            style={{ width: 150, height: 150, resizeMode: 'contain' }}
+            style={{ width: 150, height: 150, resizeMode: 'contain', opacity: 0.7 }}
           />
-          <Text style={{ marginTop: 5, fontSize: 16, color: '#666' }}>
+          <Text style={{ marginTop: 10, fontSize: 17, color: paletteV2.textSecondaryOnLight }}>
             No policies found
           </Text>
         </View>
@@ -256,7 +285,12 @@ const PoliciesScreen = () => {
           renderItem={renderPolicy}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh} 
+              colors={[paletteV2.primaryMain]}
+              tintColor={paletteV2.primaryMain}
+            />
           }
         />
       )}
@@ -264,12 +298,13 @@ const PoliciesScreen = () => {
       {policyAdd && (
         <TouchableOpacity
           onPress={() => router.push('/managePolicy')}
-          style={styles.fab}
+          // Apply the primaryMain color to the FAB background
+          style={[styles.fab, { backgroundColor: paletteV2.primaryMain }]} 
         >
-          <Ionicons name="add" size={28} color="#fff" />
+          <Ionicons name="add" size={28} color={paletteV2.textPrimaryOnDark} />
         </TouchableOpacity>
       )}
-    </View>
+    </Card>
   );
 };
 

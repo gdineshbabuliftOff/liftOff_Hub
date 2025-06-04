@@ -41,7 +41,7 @@ export default function RootLayout() {
   }
 
   if (isAuthenticated && isPublic) {
-    return <Redirect href="/dashboard" />;
+    return <Redirect href="/profile" />;
   }
 
   return (

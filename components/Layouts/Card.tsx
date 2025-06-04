@@ -5,12 +5,14 @@ type CardProps = {
   topNavBackgroundColor: string;
   topNavContent: React.ReactNode;
   children: React.ReactNode;
+  fullHeight?: boolean; // Optional prop
 };
 
 const Card = ({
   topNavBackgroundColor,
   topNavContent,
   children,
+  fullHeight = false,
 }: CardProps) => {
   return (
     <View style={styles.container}>
@@ -22,7 +24,12 @@ const Card = ({
       >
         {topNavContent}
       </View>
-      <View style={styles.body}>
+      <View
+        style={[
+          styles.body,
+          { marginBottom: fullHeight ? 0 : 70 },
+        ]}
+      >
         {children}
       </View>
     </View>
@@ -44,6 +51,5 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    paddingBottom: 70,
   },
 });

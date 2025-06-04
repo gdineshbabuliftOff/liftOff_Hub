@@ -764,7 +764,7 @@ export const styles = StyleSheet.create({
   profileImageModalCloseButton: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? 40 : 20,
-    right: 20,
+    right: 0,
     padding: 10,
     zIndex: 1,
   },
