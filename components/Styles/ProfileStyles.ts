@@ -142,7 +142,7 @@ export const styles = StyleSheet.create({
   label: { 
     fontSize: 13, 
     fontWeight: '600', 
-    color: paletteV2.textSecondaryOnLight, 
+    color: '#D3D3D3', 
     marginBottom: 6, 
     textTransform: 'uppercase',
     letterSpacing: 0.5,

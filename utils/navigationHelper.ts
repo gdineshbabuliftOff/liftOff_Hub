@@ -13,49 +13,58 @@ interface UserData {
   form4Filled: boolean;
 }
 
-export const getActiveStepAndRedirect = async (user: UserData) => {
-  let targetRoute = Routes.PROFILE;
-  let activeStep = 0;
-
-  const {
-    role,
-    joineeType,
-    editRights,
-    allFormsFilled,
-    form1Filled,
-    form2Filled,
-    form3Filled,
-    form4Filled,
-  } = user;
-
-  if (role === Roles.ADMIN) {
-    targetRoute = Routes.DASHBOARD;
-  } else if (role === Roles.EMPLOYEE && joineeType === JoineeTypes.NEW) {
-    if (!editRights || allFormsFilled) {
-      targetRoute = Routes.PROFILE;
-    } else if (!form1Filled) {
-      targetRoute = Routes.FORM1;
-      activeStep = 0;
-    } else if (!form2Filled) {
-      targetRoute = Routes.FORM2;
-      activeStep = 1;
-    } else if (!form3Filled) {
-      targetRoute = Routes.FORM3;
-      activeStep = 2;
-    } else if (!form4Filled) {
-      targetRoute = Routes.FORM4;
-      activeStep = 3;
-    }
-  } else if (role === Roles.EMPLOYEE && joineeType === JoineeTypes.EXISTING) {
-    if (!editRights || allFormsFilled || form1Filled) {
-      targetRoute = Routes.PROFILE;
+const getEmployeeActiveStep = (userData: UserData): number => {
+  if (userData.editRights) {
+    if (userData.form4Filled) {
+      return 4;
+    } else if (userData.form3Filled) {
+      return 3;
+    } else if (userData.form2Filled) {
+      return 2;
+    } else if (userData.form1Filled) {
+      return 1;
+    } else if (userData.allFormsFilled) {
+      return 4;
     } else {
-      targetRoute = Routes.FORM1;
-      activeStep = 0;
+      return 0;
     }
   }
+  return 3;
+};
+
+const determineActiveStep = (user: UserData): number => {
+  if (user.role === Roles.EMPLOYEE) {
+    return getEmployeeActiveStep(user);
+  }
+  return 3;
+};
+
+const getEmployeeNextRoute = (userData: UserData): Routes => {
+  if (userData.editRights && userData.joineeType === JoineeTypes.EXISTING && !userData.form1Filled) {
+    return Routes.FORMS;
+  } else if (userData.editRights && userData.joineeType === JoineeTypes.NEW) {
+    if (userData.allFormsFilled) {
+      return Routes.PROFILE;
+    } else {
+      return Routes.FORMS;
+    }
+  }
+  return Routes.PROFILE;
+};
+
+const determineTargetRoute = (user: UserData): Routes => {
+  if (user.role === Roles.ADMIN) {
+    return Routes.DASHBOARD;
+  } else if (user.role === Roles.EMPLOYEE) {
+    return getEmployeeNextRoute(user);
+  }
+  return Routes.PROFILE;
+};
+
+export const getActiveStepAndRedirect = async (user: UserData) => {
+  const activeStep = determineActiveStep(user);
+  const targetRoute = determineTargetRoute(user);
 
   await AsyncStorage.setItem('activeStep', JSON.stringify(activeStep));
-  // openURL('/home');
   openURL(targetRoute);
 };

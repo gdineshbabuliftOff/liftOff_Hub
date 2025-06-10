@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   topNav: {
     height: 60,
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     zIndex: 0,
   },
   body: {

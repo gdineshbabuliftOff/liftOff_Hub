@@ -17,10 +17,7 @@ export enum Roles {
     HOME = '/home',
     DASHBOARD = '/(tabs)/dashboard',
     PROFILE = '/profile',
-    FORM1 = '/forms/form1',
-    FORM2 = '/forms/form2',
-    FORM3 = '/forms/form3',
-    FORM4 = '/forms/form4',
+    FORMS = '/multiStepForm',
   }
   
   

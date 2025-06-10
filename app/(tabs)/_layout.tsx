@@ -36,7 +36,6 @@ function AnimatedIcon({
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-
   const [showDashboard, setShowDashboard] = useState(false);
   const [showNotificationDot, setShowNotificationDot] = useState(false);
 
@@ -52,14 +51,13 @@ export default function TabLayout() {
     try {
       const today = dayjs().format('YYYY-MM-DD');
       const lastSeen = await AsyncStorage.getItem('lastSeenNotification');
-
       const notifications = await BirthDayAnniversary();
-
-      const hasNotifications = Array.isArray(notifications)
-        && notifications.some(group => Array.isArray(group.events) && group.events.length > 0);
-
-      const shouldShowDot = (lastSeen !== today) && hasNotifications;
-
+      const hasNotifications =
+        Array.isArray(notifications) &&
+        notifications.some(
+          (group) => Array.isArray(group.events) && group.events.length > 0
+        );
+      const shouldShowDot = lastSeen !== today && hasNotifications;
       setShowNotificationDot(shouldShowDot);
     } catch (error) {
       console.error('Error checking notifications:', error);
@@ -107,13 +105,21 @@ export default function TabLayout() {
             case 'dashboard':
               return (
                 <AnimatedIcon focused={focused}>
-                  <Ionicons name={focused ? 'grid' : 'grid-outline'} size={size} color={color} />
+                  <Ionicons
+                    name={focused ? 'grid' : 'grid-outline'}
+                    size={size}
+                    color={color}
+                  />
                 </AnimatedIcon>
               );
             case 'profile':
               return (
                 <AnimatedIcon focused={focused}>
-                  <MaterialIcons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
+                  <MaterialIcons
+                    name={focused ? 'person' : 'person-outline'}
+                    size={size}
+                    color={color}
+                  />
                 </AnimatedIcon>
               );
             case 'contacts':
@@ -156,10 +162,15 @@ export default function TabLayout() {
           }
         },
         tabBarHideOnKeyboard: true,
-        animationEnabled: true,
-      })}
-    >
-      {showDashboard && <Tabs.Screen name="dashboard" options={{ title: 'Dashboard' }} />}
+      })}>
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: 'Dashboard',
+          href: showDashboard ? '/dashboard' : null,
+        }}
+      />
+
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
       <Tabs.Screen name="contacts" options={{ title: 'Contacts' }} />
       <Tabs.Screen name="policy" options={{ title: 'Policy' }} />

@@ -531,13 +531,7 @@ export default function ProfileScreen() {
   };
   
   const handleSelfEditDetails = () => {
-    const employeeForForm = getEmployeeObjectFromProfile(profile);
-    if (employeeForForm) {
-        setEditingProfileForForm(employeeForForm);
-        setIsProfileFormVisible(true);
-    } else {
-        Toast.show({ type: 'error', text1: 'Error', text2: 'Profile data not available for editing.', position: 'bottom' });
-    }
+    router.push('/multiStepForm')
   };
 
   const executeProfileAction = async (action: string, employeeForAction: Employee) => {
