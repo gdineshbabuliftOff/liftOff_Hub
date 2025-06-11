@@ -17,4 +17,6 @@ export const ENDPOINTS = {
     ADD_NEW_EMPLOYEE: '/admin/signup-mail',
     DOWNLOAD_EMPLOYEE_DETAILS: '/admin/download-data/',
     DOWNLOAD_EMPLOYEE_DOCUMENTS: '/documents/',
+    PERSONAL_DETAILS: '/personal-info/',
+    DOCUMENTS: '/documents/'
   };

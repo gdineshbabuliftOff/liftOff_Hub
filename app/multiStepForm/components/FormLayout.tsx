@@ -1,55 +1,84 @@
+// Example FormLayout.tsx - YOU NEED TO UPDATE YOUR ACTUAL FILE
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import SubmitButton from './SubmitButton';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-type Props = {
+interface FormLayoutProps {
   children: React.ReactNode;
   onNext: () => void;
   onBack: () => void;
   isLastStep: boolean;
   isFirstStep: boolean;
-};
+  isSubmitting: boolean; // Add this prop
+}
 
-const FormLayout = ({ children, onNext, onBack, isFirstStep, isLastStep }: Props) => (
-  <View style={styles.wrapper}>
-    <View style={styles.content}>{children}</View>
-    <View style={styles.footer}>
-      {!isFirstStep ? (
-        <View style={styles.leftButtonContainer}>
-          <SubmitButton label="Previous" onPress={onBack} />
-        </View>
-      ) : (
-        <View style={styles.emptyLeftSpace} />
-      )}
-      <View style={styles.rightButtonContainer}>
-        <SubmitButton label={isLastStep ? 'Submit' : 'Next'} onPress={onNext} />
+const FormLayout: React.FC<FormLayoutProps> = ({
+  children,
+  onNext,
+  onBack,
+  isLastStep,
+  isFirstStep,
+  isSubmitting, // Destructure it
+}) => {
+  return (
+    <View style={layoutStyles.container}>
+      <View style={layoutStyles.content}>{children}</View>
+      <View style={layoutStyles.navigationContainer}>
+        {!isFirstStep && (
+          <TouchableOpacity style={layoutStyles.backButton} onPress={onBack} disabled={isSubmitting}>
+            <Text style={layoutStyles.buttonText}>Back</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={layoutStyles.nextButton}
+          onPress={onNext}
+          disabled={isSubmitting} // Disable when submitting
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="#fff" /> // Show loader when submitting
+          ) : (
+            <Text style={layoutStyles.buttonText}>{isLastStep ? 'Submit' : 'Next'}</Text>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
-  </View>
-);
+  );
+};
 
-export default FormLayout;
-
-const styles = StyleSheet.create({
-  wrapper: {
+const layoutStyles = StyleSheet.create({
+  container: {
     flex: 1,
     justifyContent: 'space-between',
   },
   content: {
     flex: 1,
   },
-  footer: {
+  navigationContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: 16,
+    marginTop: 20,
+    paddingBottom: 10, // Add some padding at the bottom
+  },
+  backButton: {
+    backgroundColor: '#50E3C2',
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 10,
     alignItems: 'center',
   },
-  leftButtonContainer: {
+  nextButton: {
+    backgroundColor: '#50E3C2',
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 10,
+    alignItems: 'center',
   },
-  emptyLeftSpace: {
-    width: 0,
-    height: 1,
-  },
-  rightButtonContainer: {
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
+
+export default FormLayout;

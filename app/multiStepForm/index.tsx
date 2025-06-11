@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  KeyboardAvoidingView, // Import KeyboardAvoidingView
+  Platform,
   StyleSheet,
   View,
   useWindowDimensions,
@@ -10,7 +12,7 @@ import {
 import AgreementForm from './(forms)/agreement';
 import BankDetailsForm from './(forms)/bankDetails';
 import DocumentsForm from './(forms)/documents';
-import PersonalDetailsForm from './(forms)/personalDetails';
+import PersonalDetailsForm from './(forms)/personalDetails'; // Ensure this is the latest version
 
 import Card from '@/components/Layouts/Card';
 import FormLayout from './components/FormLayout';
@@ -25,7 +27,7 @@ const MultiStepForm = () => {
   const [animationDirection, setAnimationDirection] =
     useState<AnimationDirection>('forward');
   const { width } = useWindowDimensions();
-  const formRef = useRef<{ submit: () => Promise<boolean> }>(null);
+  const formRef = useRef<{ submit: () => Promise<boolean>; isSubmitting: boolean }>(null); // Updated ref type
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   const [highestReachedStep, setHighestReachedStep] = useState(0);
@@ -57,6 +59,10 @@ const MultiStepForm = () => {
   }, [currentStep]);
 
   const goNext = async () => {
+    // Check if the form is currently submitting
+    if (formRef.current?.isSubmitting) {
+      return; // Prevent multiple submissions
+    }
     const isValid = await formRef.current?.submit?.();
     if (isValid && currentStep < steps.length - 1) {
       setAnimationDirection('forward');
@@ -90,6 +96,9 @@ const MultiStepForm = () => {
   };
 
   const renderStep = () => {
+    // Pass isSubmitting state to FormLayout from the ref
+    const isFormSubmitting = formRef.current?.isSubmitting || false;
+
     switch (currentStep) {
       case 0:
         return <PersonalDetailsForm ref={formRef} />;
@@ -117,25 +126,33 @@ const MultiStepForm = () => {
           />
         </View>
       }
-      fullHeight={false}
+      fullHeight={true}
     >
-      <Animated.View
-        style={[
-          styles.animatedContainer,
-          {
-            transform: [{ translateX: animatedValue }],
-          },
-        ]}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // 'height' often works better on Android
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} // Adjust offset if needed
       >
-        <FormLayout
-          onNext={goNext}
-          onBack={goBack}
-          isLastStep={currentStep === steps.length - 1}
-          isFirstStep={currentStep === 0}
+        <Animated.View
+          style={[
+            styles.animatedContainer,
+            {
+              transform: [{ translateX: animatedValue }],
+            },
+          ]}
         >
-          {renderStep()}
-        </FormLayout>
-      </Animated.View>
+          {/* We need to get isSubmitting from the active form's ref */}
+          <FormLayout
+            onNext={goNext}
+            onBack={goBack}
+            isLastStep={currentStep === steps.length - 1}
+            isFirstStep={currentStep === 0}
+            isSubmitting={formRef.current?.isSubmitting || false} // Pass isSubmitting here
+          >
+            {renderStep()}
+          </FormLayout>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </Card>
   );
 };
@@ -146,6 +163,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9f9f9',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   animatedContainer: {
     flex: 1,
