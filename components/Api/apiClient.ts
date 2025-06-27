@@ -1,8 +1,7 @@
 // src/utils/apiClient.ts
-import Constants from 'expo-constants';
-import Toast from 'react-native-toast-message';
-import { removeAuthToken } from '@/utils/removeAuthTokens';
 import env from '@/config/env';
+import { removeAuthToken } from '@/utils/removeAuthTokens';
+import Toast from 'react-native-toast-message';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -71,6 +70,7 @@ const apiClient = async <T extends object>(
     const data: T = await response.json();
     return Object.keys(data).length ? data : null;
   } catch (err: any) {
+    console.log(err);
     Toast.show({
       type: 'error',
       text1: 'Network Error',

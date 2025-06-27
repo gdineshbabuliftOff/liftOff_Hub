@@ -11,7 +11,7 @@ type Props = {
 };
 
 const ACTIVE_COLOR = '#9B59B6';
-const COMPLETED_COLOR = '#50E3C2';
+const COMPLETED_GRADIENT = ['#26A69A', '#00897B'] as const;
 const INACTIVE_COLOR = '#E0E0E0';
 const LABEL_COLOR_ACTIVE = '#333333';
 const LABEL_COLOR_INACTIVE = '#A8A8A8';
@@ -19,6 +19,8 @@ const LABEL_COLOR_INACTIVE = '#A8A8A8';
 const StepIndicator = ({ steps, currentStep, onStepPress, highestReachedStep }: Props) => {
   const progress = useRef(new Animated.Value(highestReachedStep)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const effectiveCurrentStep = currentStep > 3 ? 0 : currentStep;
 
   useEffect(() => {
     Animated.timing(progress, {
@@ -29,35 +31,34 @@ const StepIndicator = ({ steps, currentStep, onStepPress, highestReachedStep }: 
     }).start();
 
     scaleAnim.stopAnimation();
+    scaleAnim.setValue(1);
 
-    if (currentStep < steps.length) {
-      scaleAnim.setValue(1);
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(scaleAnim, {
-            toValue: 1.15,
-            duration: 700,
-            useNativeDriver: true,
-            easing: Easing.inOut(Easing.ease),
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 1,
-            duration: 700,
-            useNativeDriver: true,
-            easing: Easing.inOut(Easing.ease),
-          }),
-        ])
-      ).start();
-    }
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.15,
+          duration: 700,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
+        }),
+      ])
+    ).start();
 
     return () => {
       scaleAnim.stopAnimation();
     };
-  }, [currentStep, highestReachedStep, steps.length]);
+  }, [currentStep, highestReachedStep]);
 
   const width = progress.interpolate({
     inputRange: [0, steps.length - 1],
     outputRange: ['0%', '100%'],
+    extrapolate: 'clamp',
   });
 
   return (
@@ -65,7 +66,7 @@ const StepIndicator = ({ steps, currentStep, onStepPress, highestReachedStep }: 
       <View style={styles.line} />
       <Animated.View style={[styles.progressLineContainer, { width }]}>
         <LinearGradient
-          colors={[COMPLETED_COLOR, ACTIVE_COLOR]}
+          colors={[COMPLETED_GRADIENT[0], ACTIVE_COLOR]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.progressLine}
@@ -73,7 +74,7 @@ const StepIndicator = ({ steps, currentStep, onStepPress, highestReachedStep }: 
       </Animated.View>
 
       {steps.map((label, index) => {
-        const isActive = index === currentStep;
+        const isActive = index === effectiveCurrentStep;
         const isClickable = index <= highestReachedStep;
         const isCompletedOrPassed = index <= highestReachedStep;
 
@@ -87,19 +88,26 @@ const StepIndicator = ({ steps, currentStep, onStepPress, highestReachedStep }: 
             <Animated.View
               style={[
                 styles.circle,
-                isCompletedOrPassed
-                  ? styles.completedCircle
-                  : isActive
+                isActive
                   ? styles.activeCircle
+                  : isCompletedOrPassed
+                  ? styles.completedCircle
                   : styles.inactiveCircle,
                 {
                   transform: [{ scale: isActive ? scaleAnim : 1 }],
                 },
               ]}
             >
-              {isCompletedOrPassed && (
-                <MaterialIcons name="check" size={18} color="#FFF" />
-              )}
+              {isCompletedOrPassed && !isActive ? (
+                <LinearGradient
+                    colors={COMPLETED_GRADIENT}
+                    style={styles.gradientCircle}
+                >
+                    <MaterialIcons name="check" size={18} color={'#FFF'} />
+                </LinearGradient>
+              ) : isCompletedOrPassed && isActive ? (
+                <MaterialIcons name="check" size={18} color={ACTIVE_COLOR} />
+              ) : null}
             </Animated.View>
             <Text
               style={[
@@ -124,7 +132,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 5,
-    marginBottom: 40,
     position: 'relative',
     alignItems: 'flex-start',
     marginTop: 5,
@@ -163,6 +170,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
+    overflow: 'hidden',
   },
   activeCircle: {
     borderWidth: 3,
@@ -174,15 +182,22 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   completedCircle: {
-    backgroundColor: COMPLETED_COLOR,
+    backgroundColor: 'transparent',
   },
   inactiveCircle: {
     backgroundColor: INACTIVE_COLOR,
+  },
+  gradientCircle: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   label: {
     fontSize: 13,
     textAlign: 'center',
     fontWeight: '500',
+    marginTop: 4,
   },
   activeLabel: {
     color: LABEL_COLOR_ACTIVE,

@@ -460,13 +460,13 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(20, 30, 40, 0.88)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Platform.OS === 'web' ? 24 : 14,
+    padding: Platform.OS === 'web' ? 24 : 10,
   },
   modalContent: {
     backgroundColor: paletteV2.surfaceCard,
     borderRadius: 20,
     padding: 0,
-    width: Platform.OS === 'web' ? 700 : '95%',
+    width: Platform.OS === 'web' ? 700 : '100%',
     maxWidth: 720,
     maxHeight: '92%',
     shadowColor: '#000000',
@@ -480,8 +480,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 10,
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: paletteV2.borderLight,
@@ -489,7 +488,6 @@ export const styles = StyleSheet.create({
   formCloseButton: {
     padding: 10,
     borderRadius: 20,
-    backgroundColor: paletteV2.neutralUltraLight,
   },
   formScrollView: {
     paddingHorizontal: 24,
@@ -768,4 +766,5 @@ export const styles = StyleSheet.create({
     padding: 10,
     zIndex: 1,
   },
+  
 });

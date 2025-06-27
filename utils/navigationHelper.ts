@@ -16,15 +16,15 @@ interface UserData {
 const getEmployeeActiveStep = (userData: UserData): number => {
   if (userData.editRights) {
     if (userData.form4Filled) {
-      return 4;
-    } else if (userData.form3Filled) {
       return 3;
-    } else if (userData.form2Filled) {
+    } else if (userData.form3Filled) {
       return 2;
-    } else if (userData.form1Filled) {
+    } else if (userData.form2Filled) {
       return 1;
+    } else if (userData.form1Filled) {
+      return 0;
     } else if (userData.allFormsFilled) {
-      return 4;
+      return 3;
     } else {
       return 0;
     }

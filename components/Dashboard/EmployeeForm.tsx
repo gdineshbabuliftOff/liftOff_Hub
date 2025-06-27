@@ -1,17 +1,19 @@
 import { Employee, EmployeeFormData, FormErrors, initialFormData as globalInitialFormData } from '@/constants/interface';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    Easing,
-    Keyboard,
-    Modal,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Animated,
+  Easing,
+  Keyboard,
+  Modal,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -62,6 +64,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isExistingJoinee, setIsExistingJoinee] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const modalFormTranslateY = useRef(new Animated.Value(300)).current;
   const modalFormOpacity = useRef(new Animated.Value(0)).current;
@@ -184,6 +187,18 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
     }
   };
 
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      const formattedDate = selectedDate.toISOString().split('T')[0]; // Format to YYYY-MM-DD
+      handleFormInputChange('dateOfJoining', formattedDate);
+    }
+  };
+
+  const showDatepicker = () => {
+    setShowDatePicker(true);
+  };
+
   const handleSubmit = async () => {
     Keyboard.dismiss();
     setFormSubmitting(true);
@@ -292,14 +307,21 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
             {formErrors.email && <Text style={styles.formErrorText}>{formErrors.email}</Text>}
 
             <Text style={styles.formLabel}>Date of Joining <Text style={styles.requiredIndicator}>*</Text></Text>
-            <TextInput
-                style={[styles.formInput, formErrors.dateOfJoining && styles.formInputError]}
-                value={formData.dateOfJoining}
-                onChangeText={(val) => handleFormInputChange('dateOfJoining', val)}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={styles.textPlaceholder.color}
-                maxLength={10}
-            />
+            <TouchableOpacity onPress={showDatepicker} style={[styles.formInput, formErrors.dateOfJoining && styles.formInputError, { justifyContent: 'center' }]}>
+                <Text>
+                    {formData.dateOfJoining || "YYYY-MM-DD"}
+                </Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={formData.dateOfJoining ? new Date(formData.dateOfJoining) : new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+              />
+            )}
             {formErrors.dateOfJoining && <Text style={styles.formErrorText}>{formErrors.dateOfJoining}</Text>}
 
             <Text style={styles.formLabel}>Designation <Text style={styles.requiredIndicator}>*</Text></Text>

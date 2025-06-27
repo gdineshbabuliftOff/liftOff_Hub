@@ -3,6 +3,7 @@ import { EmployeeDetailsUtils } from "@/constants/interface";
 import { ENDPOINTS } from "@/utils/endPoints";
 import { getLocalData } from "@/utils/localData";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from "react-native";
 import apiClient from "./apiClient";
 
 type ParsedUserData = {
@@ -17,6 +18,42 @@ export interface RNImagePickerAsset {
   fileName?: string;
   type?: string;
   fileSize?: number;
+  width?: number;
+  height?: number;
+  mimeType?: string;
+}
+
+export interface FormValues {
+  name: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  branchName: string;
+}
+
+export interface BankDetailsResponse {
+  name?: string;
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  branchName?: string;
+}
+
+export interface BankDetailsSubmitResponse {
+  success: boolean;
+  updatedAt?: string;
+}
+
+export interface BankDetailsFormValues {
+  name: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  branchName: string;
+}
+
+export interface GetLiftoffResponse {
+  url: string;
 }
 
 export const fetchEmployeeProfile = async (userId: any) => {
@@ -162,18 +199,143 @@ export const uploadProfilePicture = async (
     }
 
     const { preSignedUrl } = response1 as { preSignedUrl: string };
+    console.log(asset);
+    const fileResponse = await fetch(asset.uri);
+    const fileBlob = await fileResponse.blob();
 
-    await apiClient(preSignedUrl, {
+    // Step 3: Upload the Blob to S3
+    const uploadResponse = await fetch(preSignedUrl, {
       method: 'PUT',
-      body: asset,
       headers: {
         'Content-Type': asset.type || 'application/octet-stream',
       },
+      body: fileBlob,
     });
+
+    if (!uploadResponse.ok) {
+      throw new Error('Upload to presigned URL failed.');
+    }
 
     return preSignedUrl;
   } catch (error: any) {
-    console.error('failedToFetch', error);
+    Alert.alert('failedToFetch', error);
     throw new Error(error.message || 'failedToFetch');
   }
+};
+
+
+export const fetchDocumentData = async () => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  const currentUserData: ParsedUserData = localdata?.userData
+    ? JSON.parse(localdata.userData)
+    : { userId: '', role: Roles.EMPLOYEE };
+  const userId = currentUserData?.userId;
+  const response = await apiClient(`${ENDPOINTS.DOCUMENTS}${userId}`, {
+    method: 'GET',
+    token: token,
+  });
+  return await response;
+};
+
+
+export const deleteDocument = async (fieldName: string) => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  const currentUserData: ParsedUserData = localdata?.userData
+    ? JSON.parse(localdata.userData)
+    : { userId: '', role: Roles.EMPLOYEE };
+  const userId = currentUserData?.userId;
+  const response = await apiClient(
+    `${ENDPOINTS.DOCUMENTS}${userId}/${fieldName}`,
+    {
+      method: 'DELETE',
+      token: token,
+    },
+  );
+  return response;
+};
+
+export const fetchBankDetails = async (): Promise<FormValues> => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  const currentUserData: ParsedUserData = localdata?.userData
+    ? JSON.parse(localdata.userData)
+    : { userId: '', role: Roles.EMPLOYEE };
+  const userId = currentUserData?.userId;
+  const response = await apiClient<BankDetailsResponse>(
+    `${ENDPOINTS.BANK}${userId}`,
+    {
+      method: 'GET',
+      token: token,
+    },
+  );
+
+  const {
+    name = '',
+    bankName = '',
+    accountNumber = '',
+    ifscCode = '',
+    branchName = '',
+  } = response || {};
+
+  return {
+    name,
+    bankName,
+    accountNumber,
+    ifscCode,
+    branchName,
+  } as FormValues;
+};
+
+//submitBankDetails
+export const submitBankDetails = async (
+  values: FormValues,
+): Promise<BankDetailsSubmitResponse> => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  const currentUserData: ParsedUserData = localdata?.userData
+    ? JSON.parse(localdata.userData)
+    : { userId: '', role: Roles.EMPLOYEE };
+  const userId = currentUserData?.userId;
+  const response = await apiClient<BankDetailsResponse>(
+    `${ENDPOINTS.BANK}${userId}`, {
+    method: 'PATCH',
+    token: token,
+    body: values,
+  });
+  const data = (await response) as Partial<BankDetailsSubmitResponse>;
+
+  return {
+    success: data.success ?? true,
+    updatedAt: data.updatedAt ?? new Date().toISOString(),
+  };
+};
+
+export const getAgreement = async () => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  const currentUserData: ParsedUserData = localdata?.userData
+    ? JSON.parse(localdata.userData)
+    : { userId: '', role: Roles.EMPLOYEE };
+  const userId = currentUserData?.userId;
+  const response = await apiClient(`${ENDPOINTS.DOCUMENTS}${userId}/agreement`, {
+    method: 'GET',
+    token: token,
+  });
+  return response;
+};
+
+//to download the agreement pdf
+export const getLiftoffPdfUrl = async (): Promise<string | undefined> => {
+  const localdata = await getLocalData();
+  const token = localdata?.token;
+  const response = await apiClient<GetLiftoffResponse>(
+    `${ENDPOINTS.DOCUMENTS}liftOff-agreement`,
+    {
+      method: 'GET',
+      token: token,
+    },
+  );
+  return response?.url;
 };
