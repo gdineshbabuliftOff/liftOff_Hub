@@ -1,8 +1,9 @@
 import { openURL } from '@/utils/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import { Image } from 'expo-image';
+import * as Notifications from 'expo-notifications';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,6 +13,7 @@ import {
   Text,
   View,
 } from 'react-native';
+
 import { BirthDayAnniversary } from '../Api/adminApi';
 import Card from '../Layouts/Card';
 import { styles } from '../Styles/Notification';
@@ -28,14 +30,50 @@ interface NotificationGroup {
   events: Notification[];
 }
 
+const requestNotificationPermission = async () => {
+  const { status } = await Notifications.getPermissionsAsync();
+  if (status !== 'granted') {
+    await Notifications.requestPermissionsAsync();
+  }
+};
+
+const scheduleTodayNotificationIfNeeded = async (eventsToday: Notification[]) => {
+  const now = dayjs();
+  const nineAM = now.hour(9).minute(0).second(0);
+
+  if (now.isAfter(nineAM)) {
+    return;
+  }
+
+  if (eventsToday.length > 0) {
+    const titles = eventsToday
+      .map(e => e.fullName + (e.type === 'birthday' ? ' (Birthday)' : ' (Anniversary)'))
+      .join(', ');
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: '🎉 Today\'s Events',
+        body: `Celebrations: ${titles}`,
+        sound: true,
+      },
+      trigger: {
+        type: 'calendar',
+        hour: 9,
+        minute: 0,
+        repeats: true,
+      },
+    });
+  }
+};
+
 const NotificationsSection = () => {
   const [notifications, setNotifications] = useState<NotificationGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const navigation = useNavigation();
 
   useEffect(() => {
     fetchNotifications();
+    requestNotificationPermission();
   }, []);
 
   useFocusEffect(
@@ -44,7 +82,6 @@ const NotificationsSection = () => {
         const today = dayjs().format('YYYY-MM-DD');
         await AsyncStorage.setItem('lastSeenNotification', today);
       };
-
       markNotificationsAsSeen();
     }, [])
   );
@@ -52,8 +89,14 @@ const NotificationsSection = () => {
   const fetchNotifications = async () => {
     try {
       if (!refreshing) setLoading(true);
-      const data: NotificationGroup[] = await BirthDayAnniversary() || [];
+      const data: NotificationGroup[] = await BirthDayAnniversary();
       setNotifications(data);
+
+      const today = dayjs().format('YYYY-MM-DD');
+      const todayGroup = data.find(group => group.date === today);
+      if (todayGroup) {
+        scheduleTodayNotificationIfNeeded(todayGroup.events);
+      }
     } catch (error) {
       console.error('Failed to fetch notifications', error);
     } finally {
@@ -69,7 +112,6 @@ const NotificationsSection = () => {
 
   const getMessage = (item: Notification, date: string) => {
     const isToday = dayjs().isSame(date, 'day');
-
     if (item.type === 'birthday') {
       return isToday ? `Birthday is today 🎉` : `Upcoming Birthday 🎉`;
     } else {
@@ -105,15 +147,13 @@ const NotificationsSection = () => {
     return `${day}${getOrdinalSuffix(day)} ${month}`;
   };
 
-  const renderNotificationItem = ({ item, date }: { item: Notification, date: string }) => (
+  const renderNotificationItem = ({ item, date }: { item: Notification; date: string }) => (
     <Pressable
       style={[
         styles.notificationItem,
         item.type === 'birthday' ? styles.birthday : styles.anniversary,
       ]}
-      onPress={() => {
-        openURL(`/contacts?email=${item?.email}`);
-      }}
+      onPress={() => openURL(`/contacts?email=${item?.email}`)}
     >
       <Image
         source={
@@ -143,9 +183,7 @@ const NotificationsSection = () => {
         ) : (
           <FlatList
             data={notifications}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             renderItem={({ item }) => (
               <View style={styles.dateGroup}>
                 <Text style={styles.groupDate}>{formatDate(item.date)}</Text>
@@ -165,7 +203,9 @@ const NotificationsSection = () => {
                   source={require('../../assets/images/noemployee.png')}
                   style={styles.noEmployeeImage}
                 />
-                <Text style={styles.emptyText}>There are no events for the next 7 days.</Text>
+                <Text style={styles.emptyText}>
+                  There are no events for the next 7 days.
+                </Text>
               </View>
             }
           />

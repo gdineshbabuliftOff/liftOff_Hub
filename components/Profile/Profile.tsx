@@ -531,7 +531,10 @@ export default function ProfileScreen() {
   };
   
   const handleSelfEditDetails = () => {
-    router.push('/multiStepForm')
+    router.push({
+      pathname: '/multiStepForm',
+      params: { targetStep: '0' }
+    });
   };
 
   const executeProfileAction = async (action: string, employeeForAction: Employee) => {

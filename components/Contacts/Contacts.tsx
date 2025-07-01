@@ -1,5 +1,7 @@
 import { formatDate } from '@/constants/common';
+import { Roles } from '@/constants/enums';
 import { EmployeeProfile } from '@/constants/types';
+import { getLocalData } from '@/utils/localData';
 import { openURL } from '@/utils/navigation';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -29,12 +31,28 @@ const ContactsScreen = () => {
   const [searchText, setSearchText] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [isProfileModalVisible, setIsProfileModalVisible] = useState<boolean>(false); // State for modal visibility
+  const [isProfileModalVisible, setIsProfileModalVisible] = useState<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   const emptyImage = require('../..//assets/images/noemployee.png');
 
   const { email } = useLocalSearchParams();
   const normalizedEmail = typeof email === 'string' ? email.toLowerCase() : '';
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      const localData = await getLocalData();
+      if (localData?.userData) {
+        const parsedUserData = JSON.parse(localData.userData);
+        if (parsedUserData.role === Roles.ADMIN) {
+          setIsAdmin(true);
+        }
+      }
+      await loadEmployees();
+    };
+    loadData();
+  }, []);
 
   const loadEmployees = async () => {
     try {
@@ -54,10 +72,6 @@ const ContactsScreen = () => {
       setRefreshing(false);
     }
   };
-
-  useEffect(() => {
-    loadEmployees();
-  }, []);
 
   useEffect(() => {
     if (normalizedEmail && employees.length > 0) {
@@ -135,8 +149,12 @@ const ContactsScreen = () => {
       <DetailRow label="Email" value={emp.email} />
       <DetailRow label="Phone" value={emp.phone || 'N/A'} />
       <DetailRow label="Date Of Birth" value={formatDate(emp.dateOfBirth)} />
-      <DetailRow label="Blood Group" value={emp.bloodGroup || 'N/A'} />
-      <DetailRow label="Address" value={emp.currentAddress || 'N/A'} />
+      {isAdmin && (
+        <>
+          <DetailRow label="Blood Group" value={emp.bloodGroup || 'N/A'} />
+          <DetailRow label="Address" value={emp.currentAddress || 'N/A'} />
+        </>
+      )}
     </ScrollView>
   );
 
@@ -149,7 +167,7 @@ const ContactsScreen = () => {
             {selectedEmployee ? (
               <TouchableOpacity onPress={() => {
                 setSelectedEmployee(null);
-                openURL('/contacts'); // Assuming openURL navigates back or clears params
+                openURL('/contacts');
               }}>
                 <Ionicons name="arrow-back" size={24} color="#000" style={{ marginRight: 12 }} />
               </TouchableOpacity>
@@ -204,10 +222,10 @@ const ContactsScreen = () => {
         />
       )}
 
-      {selectedEmployee && ( // Render modal only if an employee is selected
+      {selectedEmployee && (
         <ProfilePictureModal
           isVisible={isProfileModalVisible}
-          imageUrl={selectedEmployee.photoUrl || null} // Pass the selected employee's photoUrl
+          imageUrl={selectedEmployee.photoUrl || null}
           defaultImage={defaultImage}
           onClose={closeProfileModal}
         />

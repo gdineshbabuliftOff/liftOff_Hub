@@ -39,6 +39,7 @@ import Toast from 'react-native-toast-message';
 import { paletteV2, styles } from '../Styles/DashBoardStyles';
 import EmployeeForm from './EmployeeForm';
 
+import { getLocalData } from '@/utils/localData';
 import DeactivationModal from './DeactivationModal';
 import DeletePermanentlyModal from './DeletePermanentlyModal';
 import EmployeeDetailsCard from './EmployeeDetailsCard';
@@ -136,8 +137,18 @@ const DashboardScreen = () => {
   }, [currentPage, searchTerm, limit, sort, direction, isRefreshing, isFormVisible, animateFabIn, animateFabOut]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const init = async () => {
+    const localdata = await getLocalData();
+    const token = localdata?.token;
+
+    if (token) {
+      fetchData();
+    }
+  };
+
+  init();
+}, [fetchData]);
+
 
   useEffect(() => {
     Animated.timing(paginationOpacity, {

@@ -1,6 +1,8 @@
-import { getLocalData } from '@/utils/localData';
+import { useAuthStatus } from '@/hooks/useAuth';
+import * as MediaLibrary from 'expo-media-library';
+import * as Notifications from 'expo-notifications';
 import { Redirect, Slot, usePathname } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -9,21 +11,23 @@ const publicRoutes = ['/login', '/signUp', '/reset-password', '/forgot-password'
 
 export default function RootLayout() {
   const pathname = usePathname();
-  const [authStatus, setAuthStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
+  const { status: authStatus } = useAuthStatus();
+
+  const handlePermissions = async () => {
+    const notificationStatus = await Notifications.getPermissionsAsync();
+    if (notificationStatus.status !== 'granted' && notificationStatus.status !== 'denied') {
+      await Notifications.requestPermissionsAsync();
+    }
+
+    const mediaStatus = await MediaLibrary.getPermissionsAsync();
+    if (mediaStatus.status !== 'granted' && mediaStatus.status !== 'denied') {
+      await MediaLibrary.requestPermissionsAsync();
+    }
+  };
 
   useEffect(() => {
-    const check = async () => {
-      const localdata = await getLocalData();
-      const token = localdata?.token;
-      if (token) {
-        setAuthStatus('authenticated');
-      } else {
-        setAuthStatus('unauthenticated');
-      }
-    };
-
-    check();
-  }, [pathname]);
+    handlePermissions();
+  }, []);
 
   if (authStatus === 'loading') {
     return (
@@ -40,7 +44,7 @@ export default function RootLayout() {
     return <Redirect href="/login" />;
   }
 
-  if (isAuthenticated && isPublic) {
+  if (isAuthenticated && pathname === '/') {
     return <Redirect href="/profile" />;
   }
 

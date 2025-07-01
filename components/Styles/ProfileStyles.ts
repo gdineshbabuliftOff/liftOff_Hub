@@ -282,7 +282,7 @@ export const styles = StyleSheet.create({
   downloadButton: {
     position: 'absolute',
     right: 25,
-    bottom: 35,
+    bottom: 70,
     backgroundColor: paletteV2.accentMain,
     borderRadius: 35, 
     width: 70,

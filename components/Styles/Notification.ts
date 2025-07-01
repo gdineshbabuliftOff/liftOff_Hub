@@ -13,6 +13,7 @@ export const styles = StyleSheet.create({
     dateGroup: {
       marginBottom: 16,
       marginTop: 10,
+      paddingHorizontal: 16,
     },
     groupDate: {
       fontSize: 16,

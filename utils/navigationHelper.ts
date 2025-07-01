@@ -1,6 +1,6 @@
 import { JoineeTypes, Roles, Routes } from '@/constants/enums';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { openURL } from './navigation';
+import { router } from 'expo-router';
 
 interface UserData {
   role: string;
@@ -66,5 +66,12 @@ export const getActiveStepAndRedirect = async (user: UserData) => {
   const targetRoute = determineTargetRoute(user);
 
   await AsyncStorage.setItem('activeStep', JSON.stringify(activeStep));
-  openURL(targetRoute);
+  if (targetRoute === Routes.FORMS) {
+    router.push({
+      pathname: '/multiStepForm',
+      params: { targetStep: activeStep.toString() },
+    });
+  } else {
+    router.push(targetRoute as any);
+  }
 };

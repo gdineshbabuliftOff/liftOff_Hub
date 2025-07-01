@@ -6,7 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import { Tabs } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { useColorScheme, View } from 'react-native';
+import { Text, useColorScheme, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -38,13 +38,21 @@ export default function TabLayout() {
   const isDark = colorScheme === 'dark';
   const [showDashboard, setShowDashboard] = useState(false);
   const [showNotificationDot, setShowNotificationDot] = useState(false);
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
 
   const checkPermissions = async () => {
-    const admin = await isAdmin();
-    const editor = await isEditor();
-    const viewusers = await viewUsers();
-    const canViewDashboard = admin || (editor && viewusers);
-    setShowDashboard(canViewDashboard);
+    try {
+      const admin = await isAdmin();
+      const editor = await isEditor();
+      const viewusers = await viewUsers();
+      const canViewDashboard = admin || (editor && viewusers);
+      setShowDashboard(canViewDashboard);
+    } catch (error) {
+      console.error('Error checking permissions:', error);
+      setShowDashboard(false);
+    } finally {
+      setIsLoadingPermissions(false);
+    }
   };
 
   const checkNotificationStatus = async () => {
@@ -57,11 +65,21 @@ export default function TabLayout() {
         notifications.some(
           (group) => Array.isArray(group.events) && group.events.length > 0
         );
-      const shouldShowDot = lastSeen !== today && hasNotifications;
+      const shouldShowDot = hasNotifications && lastSeen !== today;
       setShowNotificationDot(shouldShowDot);
     } catch (error) {
       console.error('Error checking notifications:', error);
       setShowNotificationDot(false);
+    }
+  };
+
+  const markNotificationsAsSeen = async () => {
+    try {
+      const today = dayjs().format('YYYY-MM-DD');
+      await AsyncStorage.setItem('lastSeenNotification', today);
+      setShowNotificationDot(false);
+    } catch (error) {
+      console.error('Error marking notifications as seen:', error);
     }
   };
 
@@ -74,6 +92,16 @@ export default function TabLayout() {
       checkNotificationStatus();
     }, [])
   );
+
+  if (isLoadingPermissions) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: isDark ? '#1a1a1a' : '#f0f0f0' }}>
+        <Text style={{ fontSize: 18, color: isDark ? '#fff' : '#000' }}>
+          Loading app...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <Tabs
@@ -159,6 +187,8 @@ export default function TabLayout() {
                   </View>
                 </AnimatedIcon>
               );
+            default:
+              return null;
           }
         },
         tabBarHideOnKeyboard: true,
@@ -174,7 +204,19 @@ export default function TabLayout() {
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
       <Tabs.Screen name="contacts" options={{ title: 'Contacts' }} />
       <Tabs.Screen name="policy" options={{ title: 'Policy' }} />
-      <Tabs.Screen name="notification" options={{ title: 'Notification' }} />
+      <Tabs.Screen
+        name="notification"
+        options={{ title: 'Notification' }}
+        listeners={({ route }) => ({
+          tabPress: (e) => {
+            if (route.name === 'notification') {
+              if (showNotificationDot) {
+                markNotificationsAsSeen();
+              }
+            }
+          },
+        })}
+      />
     </Tabs>
   );
 }

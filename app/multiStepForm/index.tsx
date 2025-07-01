@@ -2,8 +2,10 @@ import Card from '@/components/Layouts/Card';
 import { getLocalData, LocalUserData } from '@/utils/localData';
 import { openURL } from '@/utils/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Animated, Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import AgreementForm from './(forms)/agreement';
 import BankDetailsForm from './(forms)/bankDetails';
 import DocumentsForm from './(forms)/documents';
@@ -16,6 +18,7 @@ type AnimationDirection = 'forward' | 'backward';
 type FormActionType = 'submit' | 'save' | 'none';
 
 const MultiStepForm = () => {
+  const { targetStep } = useLocalSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
   const [animationDirection, setAnimationDirection] = useState<AnimationDirection>('forward');
   const { width } = useWindowDimensions();
@@ -33,7 +36,7 @@ const MultiStepForm = () => {
       const stored = await AsyncStorage.getItem('activeStep');
       if (stored !== null) {
         const parsedStep = parseInt(stored, 10);
-        setCurrentStep(parsedStep);
+        setCurrentStep(targetStep? Number(targetStep) : parsedStep);
         setHighestReachedStep(parsedStep);
       }
       const localData = await getLocalData();
@@ -70,13 +73,21 @@ const MultiStepForm = () => {
       const isSuccess = await formRef.current?.submit?.();
       if (isSuccess) {
         if (isSpecialUser) {
-          Alert.alert('Form Submitted', 'Redirecting to Profile Page!');
+          Toast.show({
+            type: 'success',
+            text1: 'Form Submitted',
+            text2: 'Redirecting to Profile Page!',
+          });
           handleProfileRedirect();
         } else if (currentStep === steps.length - 1) {
-          Alert.alert('Onboarding Complete', 'You have successfully completed all steps.');
+          Toast.show({
+            type: 'success',
+            text1: 'Onboarding Complete',
+            text2: 'You have successfully completed all steps.',
+          });
           setAnimationDirection('forward');
+          handleProfileRedirect();
           setCurrentStep(0);
-          await AsyncStorage.setItem('activeStep', '0');
         } else {
           setAnimationDirection('forward');
           const nextStep = currentStep + 1;
@@ -157,6 +168,7 @@ const MultiStepForm = () => {
             style={styles.fabImage} 
         />
     </TouchableOpacity>
+    <Toast />
     </Card>
   );
 };
@@ -185,8 +197,8 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
     right: 10,
@@ -200,8 +212,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   fabImage: {
-    width: 60,
-    height: 60,
+    width: 40,
+    height: 40,
     borderRadius: 30,
   },
 });

@@ -4,19 +4,19 @@ import { useEffect, useState } from 'react';
 export function useAuthStatus() {
   const [status, setStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
 
-  useEffect(() => {
-    const check = async() => {
-      const localdata = await getLocalData();
-      const token = localdata?.token;
-      if (token) {
-        setStatus('authenticated');
-      } else {
-        setStatus('unauthenticated');
-      }
-    };
+  const checkAuth = async () => {
+    const localdata = await getLocalData();
+    const token = localdata?.token;
+    if (token) {
+      setStatus('authenticated');
+    } else {
+      setStatus('unauthenticated');
+    }
+  };
 
-    check();
+  useEffect(() => {
+    checkAuth();
   }, []);
 
-  return status;
+  return { status, refreshAuth: checkAuth };
 }

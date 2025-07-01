@@ -64,6 +64,7 @@ export const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#fff',
     paddingBottom: 40,
+    flexGrow: 1,
   },
   detailAvatar: {
     width: 100,

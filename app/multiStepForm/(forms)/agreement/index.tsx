@@ -1,5 +1,5 @@
 import apiClient from '@/components/Api/apiClient';
-import { deleteDocument, getAgreement, getLiftoffPdfUrl } from '@/components/Api/userApi'; // Assuming these functions are in userApi
+import { deleteDocument, getAgreement, getLiftoffPdfUrl } from '@/components/Api/userApi';
 import { Roles } from '@/constants/enums';
 import CustomProgressBar from '@/constants/ProgressBar';
 import { ENDPOINTS } from '@/utils/endPoints';
@@ -16,12 +16,15 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// --- Types ---
 type ParsedUserData = { userId: string; role: Roles; [key: string]: any; };
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 export type FormHandle = {
   submit: () => Promise<boolean>;
+};
+
+export type AgreementFormProps = {
+  onDirtyChange?: (isDirty: boolean) => void;
 };
 
 type DocumentStatus = {
@@ -32,7 +35,6 @@ type DocumentStatus = {
   size: number | null;
 };
 
-// Define the expected structure of the agreement document from the API
 interface AgreementDocument {
   documentGroup: string;
   name: string;
@@ -40,12 +42,9 @@ interface AgreementDocument {
   url: string;
 }
 
-// Define the expected response structure from the getAgreement API
 interface GetAgreementApiResponse {
   agreement: AgreementDocument;
 }
-
-// --- Helper Function ---
 
 const uploadFile = async (
   file: DocumentPicker.DocumentPickerAsset,
@@ -113,10 +112,7 @@ const uploadFile = async (
   }
 };
 
-
-// --- Component ---
-
-const AgreementForm = forwardRef<FormHandle>((_, ref) => {
+const AgreementForm = forwardRef<FormHandle, AgreementFormProps>(({ onDirtyChange }, ref) => {
   const [documentState, setDocumentState] = useState<DocumentStatus>({
     name: '',
     url: null,
@@ -128,24 +124,15 @@ const AgreementForm = forwardRef<FormHandle>((_, ref) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
   const activeUpload = useRef<XMLHttpRequest | null>(null);
   
   const fetchAndSetAgreement = useCallback(async () => {
     try {
-      // Allow TypeScript to infer the type from getAgreement() which might be 'object | null'
-      const response = await getAgreement(); 
-
-      // Use a type guard to safely check if response conforms to GetAgreementApiResponse
-      if (response && typeof response === 'object' && 'agreement' in response && 
-          response.agreement && typeof response.agreement === 'object' && 'url' in response.agreement) {
-        
-        // Assert the type after the type guard for safe access
+      const response = await getAgreement();
+      if (response && typeof response === 'object' && 'agreement' in response && response.agreement && typeof response.agreement === 'object' && 'url' in response.agreement) {
         const typedResponse = response as GetAgreementApiResponse;
-
         setDocumentState({
           name: typedResponse.agreement.name || 'Signed Agreement',
           url: typedResponse.agreement.url,
@@ -188,6 +175,8 @@ const AgreementForm = forwardRef<FormHandle>((_, ref) => {
       const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
       if (result.canceled) return;
       
+      onDirtyChange?.(true);
+
       const file = result.assets[0];
       if (file.size && file.size > MAX_FILE_SIZE_BYTES) {
         Toast.show({ type: 'error', text1: 'File Too Large', text2: `Please select a file smaller than ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB.` });
@@ -234,6 +223,7 @@ const AgreementForm = forwardRef<FormHandle>((_, ref) => {
       try {
         await deleteDocument('agreement');
         updateDocumentState({ name: '', url: null, progress: 0, status: 'idle', size: null });
+        onDirtyChange?.(true);
         Toast.show({ type: 'success', text1: 'Agreement deleted successfully.' });
       } catch (error) {
         console.error("Delete failed:", error);
@@ -260,35 +250,26 @@ const AgreementForm = forwardRef<FormHandle>((_, ref) => {
     const url = await getLiftoffPdfUrl();
     if (url) {
       try {
-        const filename = url.substring(url.lastIndexOf('/') + 1).split('?')[0]; // Extract filename from URL
+        const filename = url.substring(url.lastIndexOf('/') + 1).split('?')[0];
         const localUri = `${FileSystem.documentDirectory}${filename || 'agreement.pdf'}`;
-
-        // Download the file to a temporary location within the app's private storage
         const { uri: tempFileUri } = await FileSystem.downloadAsync(url, localUri);
 
         if (Platform.OS === 'android') {
           try {
-            // Request directory permissions for Android's Storage Access Framework
             const directoryUri = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
             if (!directoryUri.granted) {
               Toast.show({ type: 'info', text1: 'Permission Denied', text2: "File not saved. Downloaded to app's private folder." });
-              // Optionally, inform the user about the temporary path if they deny permission
               console.log(`File saved temporarily to: ${tempFileUri}`);
               return;
             }
 
-            // Read the content from the temporary file
-            // Use FileSystem.readAsStringAsync with Base64 encoding to get the file content
             const content = await FileSystem.readAsStringAsync(tempFileUri, { encoding: FileSystem.EncodingType.Base64 });
-
-            // Create a new file in the user-chosen directory
             const fileUriInDownloads = await FileSystem.StorageAccessFramework.createFileAsync(
               directoryUri.directoryUri,
               filename || 'agreement.pdf',
-              'application/pdf' // Specify mime type
+              'application/pdf'
             );
 
-            // Write the content to the newly created file
             await FileSystem.writeAsStringAsync(fileUriInDownloads, content, { encoding: FileSystem.EncodingType.Base64 });
             
             Toast.show({
@@ -297,7 +278,6 @@ const AgreementForm = forwardRef<FormHandle>((_, ref) => {
               text2: `File "${filename || 'agreement.pdf'}" saved successfully to your chosen location!`,
             });
 
-            // Delete the temporary file
             await FileSystem.deleteAsync(tempFileUri, { idempotent: true });
 
           } catch (safError: any) {
@@ -309,8 +289,7 @@ const AgreementForm = forwardRef<FormHandle>((_, ref) => {
             });
           }
         } else {
-          // Fallback for iOS and other platforms: Open in browser/viewer
-          const supported = await Linking.canOpenURL(tempFileUri); // Use tempFileUri for opening
+          const supported = await Linking.canOpenURL(tempFileUri);
           if (supported) {
               await Linking.openURL(tempFileUri);
               Toast.show({
