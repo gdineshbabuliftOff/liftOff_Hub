@@ -1,0 +1,23 @@
+export const ENDPOINTS = {
+    LOGIN: '/auth/signin',
+    SIGNUP: '/auth/signup',
+    FORGOT_PASSWORD: '/auth/forget-password',
+    RESET_PASSWORD: '/auth/reset-password',
+    LOGOUT: '/auth/logout',
+    CONTACTS: '/profile/contacts',
+    POLICYS: '/profile/policy',
+    UPLOAD_POLICY: '/admin/policy-upload',
+    DELETE_POLICY: '/admin/policy-delete',
+    NOTIFICATION: '/notifications/user-anniversaries-birthdays',
+    PROFILE: '/profile/',
+    ADMIN_DASHBOARD: '/admin/users',
+    SEND_REMINDER: '/admin/send-reminder',
+    EDIT_RIGHTS: '/admin/',
+    DELETE_USER_PERMANENTLY: '/admin/user/',
+    ADD_NEW_EMPLOYEE: '/admin/signup-mail',
+    DOWNLOAD_EMPLOYEE_DETAILS: '/admin/download-data/',
+    DOWNLOAD_EMPLOYEE_DOCUMENTS: '/documents/',
+    PERSONAL_DETAILS: '/personal-info/',
+    DOCUMENTS: '/documents/',
+    BANK: '/bank/'
+  };
