@@ -1,0 +1,86 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+    navBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: 60,
+    },
+    navTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#000',
+      flex: 1,
+    },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      backgroundColor: '#f1f1f1',
+      paddingHorizontal: 10,
+      borderRadius: 8,
+      gap: 6,
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: 16,
+      color: '#000',
+    },
+    list: {
+      padding: 12,
+    },
+    item: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 20,
+      backgroundColor: '#fff',
+      marginBottom: 10,
+      borderRadius: 10,
+      shadowColor: '#000',
+      shadowOpacity: 0.1,
+      shadowRadius: 5,
+      elevation: 2,
+    },
+    fileName: {
+      flex: 1,
+      fontSize: 16,
+      color: '#222',
+      fontWeight: '500',
+    },
+    loaderContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    downloadButton: {
+      position: 'absolute',
+      bottom: 80,
+      right: 10,
+      backgroundColor: '#fff',
+      padding: 10,
+      borderRadius: 50,
+      elevation: 5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+    },
+    fab: {
+      position: 'absolute',
+      bottom: 10,
+      right: 10,
+      backgroundColor: '#007AFF', // or your preferred color
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 5,
+      zIndex: 1000,
+    },
+    
+  });

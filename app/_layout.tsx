@@ -1,29 +1,59 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { useAuthStatus } from '@/hooks/useAuth';
+import * as MediaLibrary from 'expo-media-library';
+import * as Notifications from 'expo-notifications';
+import { Redirect, Slot, usePathname } from 'expo-router';
+import { useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+const publicRoutes = ['/login', '/signUp', '/reset-password', '/forgot-password'];
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  const pathname = usePathname();
+  const { status: authStatus } = useAuthStatus();
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
+  const handlePermissions = async () => {
+    const notificationStatus = await Notifications.getPermissionsAsync();
+    if (notificationStatus.status !== 'granted' && notificationStatus.status !== 'denied') {
+      await Notifications.requestPermissionsAsync();
+    }
+
+    const mediaStatus = await MediaLibrary.getPermissionsAsync();
+    if (mediaStatus.status !== 'granted' && mediaStatus.status !== 'denied') {
+      await MediaLibrary.requestPermissionsAsync();
+    }
+  };
+
+  useEffect(() => {
+    handlePermissions();
+  }, []);
+
+  if (authStatus === 'loading') {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  const isPublic = publicRoutes.includes(pathname);
+  const isAuthenticated = authStatus === 'authenticated';
+
+  if (!isAuthenticated && !isPublic) {
+    return <Redirect href="/login" />;
+  }
+
+  if (isAuthenticated && pathname === '/') {
+    return <Redirect href="/profile" />;
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1 }}>
+        <Toast />
+        <Slot />
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
