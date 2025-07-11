@@ -1,16 +1,16 @@
+import { Fonts } from '@/utils/Fonts';
+import { ResizeMode, Video } from 'expo-av';
 import React from 'react';
 import {
-  StyleSheet,
-  View,
-  Text,
+  Dimensions,
+  Image,
   KeyboardAvoidingView,
   Platform,
-  Dimensions,
   SafeAreaView,
-  Image,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
-import { Fonts } from '@/utils/Fonts';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
   keyboardAvoiding: {
     width: '100%',
     alignItems: 'center',
+    paddingHorizontal: 10,
   },
   card: {
     width: '100%',

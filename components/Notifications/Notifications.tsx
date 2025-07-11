@@ -57,7 +57,7 @@ const scheduleTodayNotificationIfNeeded = async (eventsToday: Notification[]) =>
         sound: true,
       },
       trigger: {
-        type: 'calendar',
+        type: 'daily',
         hour: 9,
         minute: 0,
         repeats: true,

@@ -1,4 +1,4 @@
-import { formatDateFull } from '@/constants/common';
+import { Employee, EmployeeFormData } from '@/constants/interface'; // Ensure these are defined and exported
 import { getLocalData } from '@/utils/localData';
 import { openURL } from '@/utils/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,15 +8,11 @@ import { Href, useLocalSearchParams, usePathname, useRouter } from 'expo-router'
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated,
-  Image,
-  ImageSourcePropType,
-  Modal as ReactNativeModal,
-  RefreshControl,
+  Animated, Platform, RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -24,11 +20,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { WebView } from 'react-native-webview';
 import { logoutUser } from '../Api/authentication';
 import { fetchEmployeeProfile } from '../Api/userApi';
-import ProfilePictureModal from '../Dashboard/ProfilePictureModal';
 import Card from '../Layouts/Card';
-
-
-const DASHBOARD_ROUTE = '/dashboard';
 
 import {
   resignationDate as apiResignationDate,
@@ -43,13 +35,15 @@ import {
 } from '../Api/adminApi';
 
 import { MENU_ACTIONS } from '@/constants/common';
-import { Employee, EmployeeFormData } from '@/constants/interface';
+import { JoineeTypes, Roles } from '@/constants/enums';
 import { ENDPOINTS } from '@/utils/endPoints';
-import DeactivationModal from '../Dashboard/DeactivationModal';
-import DeletePermanentlyModal from '../Dashboard/DeletePermanentlyModal';
-import EmployeeActionMenu from '../Dashboard/EmployeeActions';
-import EmployeeForm from '../Dashboard/EmployeeForm';
 import { styles } from '../Styles/ProfileStyles';
+import ProfileDetailsSection from './ProfileDetailsSection';
+import ProfileModalsAndActions from './ProfileModalsAndActions';
+
+
+
+const DASHBOARD_ROUTE = '/dashboard';
 
 const paletteV2 = {
   primaryMain: '#5DBBAD',
@@ -74,40 +68,11 @@ const paletteV2 = {
   gradientPrimaryButton: ['#5DBBAD', '#3E9C90'],
 };
 
-export enum Roles {
-  ADMIN = 'ADMIN',
-  EMPLOYEE = 'EMPLOYEE',
-  EDITOR = 'EDITOR',
-}
-
-export enum JoineeTypes {
-  NEW = 'NEW',
-  EXISTING = 'EXISTING',
-}
-
-export enum DetailsCard {
-  aadharCard = 'Aadhar Card',
-  panCard = 'PAN Card',
-  tenthMarksCard = '10th Marks Card',
-  twelthMarksCard = '12th Marks Card',
-  bachelorsOrHigherDegree = 'Bachelors/Higher Degree',
-  last3MonthsPayslips = 'Last 3 Months Payslips',
-  last3OrgRelievingOfferLetter = 'Last Org. Relieving/Offer Letter',
-  fullAndFinalSettlement = 'Full and Final Settlement',
-  agreement = 'Agreement',
-}
-
+// Re-defining enums and types that were moved out, or import them from a shared constants/types file
 type ParsedUserData = {
   userId: string;
   role: Roles;
   [key: string]: any;
-};
-
-type ApiDocumentDetail = {
-  documentGroup: string;
-  name: string;
-  documentType: string;
-  url: string;
 };
 
 type WebViewDocument = {
@@ -116,147 +81,6 @@ type WebViewDocument = {
   name: string;
   documentGroup?: string;
 };
-
-const EXPERIENCE_SPECIFIC_DOCS: string[] = [
-  DetailsCard.last3MonthsPayslips,
-  DetailsCard.last3OrgRelievingOfferLetter,
-  DetailsCard.fullAndFinalSettlement,
-];
-
-type ContactType = {
-  name: string;
-  phoneNumber: string;
-  relationship?: string;
-};
-
-
-const shouldShowDocumentsSectionOriginal = (pathname: string, userRole: Roles | null) => {
-  return (pathname === '/profile' && (userRole === Roles.EMPLOYEE || userRole === Roles.EDITOR)) ||
-    (pathname === '/employee-details' && userRole === Roles.ADMIN);
-};
-
-const shouldShowBankDetailsOriginal = (userRole: Roles | null, currentJoineeType: JoineeTypes | null, pathname: string) => {
-  return (userRole === Roles.EMPLOYEE || userRole === Roles.EDITOR || pathname === '/employee-details') &&
-    (currentJoineeType === JoineeTypes.NEW || pathname === '/employee-details');
-};
-
-interface DetailItemProps {
-  label: string;
-  value?: string | number | null;
-  fullWidth?: boolean;
-}
-
-const DetailItem: React.FC<DetailItemProps> = ({ label, value, fullWidth = false }) => (
-  <View style={[styles.fieldContainer, fullWidth && styles.fieldContainerFullWidth]}>
-    <Text style={styles.label}>{label}</Text>
-    <Text style={styles.value}>
-      {value !== null && value !== undefined && String(value).trim() !== '' ? String(value) : 'N/A'}
-    </Text>
-  </View>
-);
-
-interface DetailRowProps {
-  children: React.ReactElement<DetailItemProps> | React.ReactElement<DetailItemProps>[];
-}
-
-const DetailRow: React.FC<DetailRowProps> = ({ children }) => (
-  <View style={styles.row}>
-    {React.Children.map(children, (child) => (
-      <View style={[styles.column, React.Children.count(children) === 1 && styles.fullColumn]}>
-        {child}
-      </View>
-    ))}
-  </View>
-);
-
-interface ProfileSectionProps {
-  title: string;
-  children: React.ReactNode;
-}
-
-const ProfileSection: React.FC<ProfileSectionProps> = ({ title, children }) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    {children}
-  </View>
-);
-
-interface ProfileHeaderProps {
-  photoUrl?: string;
-  defaultImage: ImageSourcePropType;
-  imageLoading: boolean;
-  imageError: boolean;
-  onImageLoad: () => void;
-  onImageError: () => void;
-  showEditButton: boolean;
-  onEditPress: () => void;
-  onAvatarPress?: () => void;
-}
-
-const ProfileHeaderComponent: React.FC<ProfileHeaderProps> = ({
-  photoUrl,
-  defaultImage,
-  imageLoading,
-  imageError,
-  onImageLoad,
-  onImageError,
-  showEditButton,
-  onEditPress,
-  onAvatarPress,
-}) => (
-  <View style={styles.profileHeaderMain}>
-    <TouchableOpacity onPress={onAvatarPress} disabled={!onAvatarPress}>
-      <View style={styles.avatarContainer}>
-        {imageLoading && !imageError && photoUrl && (
-          <ActivityIndicator size="small" color={paletteV2.primaryMain} style={styles.imageLoader} />
-        )}
-        <Image
-          source={imageError || !photoUrl ? defaultImage : { uri: photoUrl }}
-          style={styles.avatar}
-          onLoad={onImageLoad}
-          onError={onImageError}
-        />
-      </View>
-    </TouchableOpacity>
-    {showEditButton && (
-      <TouchableOpacity style={styles.actionButton} onPress={onEditPress}>
-        <MaterialIcons name="edit" size={18} color={paletteV2.textPrimaryOnDark} style={{ marginRight: 8 }} />
-        <Text style={styles.actionButtonText}>Edit My Details</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-);
-
-interface DocumentItemProps {
-  documentDisplayLabel: string;
-  docFromApi?: ApiDocumentDetail;
-  onViewDocument: (doc: WebViewDocument) => void;
-}
-
-const DocumentItemComponent: React.FC<DocumentItemProps> = ({ documentDisplayLabel, docFromApi, onViewDocument }) => (
-  <View style={styles.documentItem}>
-    <MaterialIcons name="description" size={24} color={paletteV2.primaryMain} />
-    <Text style={styles.documentName}>{documentDisplayLabel}</Text>
-    {docFromApi?.url ? (
-      <TouchableOpacity
-        onPress={() => onViewDocument({
-          url: docFromApi.url,
-          name: docFromApi.name,
-          documentTypeDisplay: documentDisplayLabel,
-          documentGroup: docFromApi.documentGroup,
-        })}
-        style={styles.viewButton}
-      >
-        <Text style={styles.viewButtonText}>View</Text>
-        <MaterialIcons name="visibility" size={16} color={paletteV2.primaryDark} style={{ marginLeft: 5 }} />
-      </TouchableOpacity>
-    ) : (
-      <View style={styles.pendingTag}>
-        <Text style={styles.pendingTagText}>Pending</Text>
-      </View>
-    )}
-  </View>
-);
 
 
 interface WebViewModalProps {
@@ -402,8 +226,8 @@ export default function ProfileScreen() {
 
   const [isProfilePicModalVisible, setIsProfilePicModalVisible] = useState<boolean>(false);
 
-  const handleImageLoad = () => { setImageLoading(false); setImageError(false); };
-  const handleImageError = () => { setImageLoading(false); setImageError(true); };
+  const handleImageLoad = useCallback(() => { setImageLoading(false); setImageError(false); }, []);
+  const handleImageError = useCallback(() => { setImageLoading(false); setImageError(true); }, []);
 
   const getEmployeeObjectFromProfile = useCallback((p: any): Employee | null => {
     if (!p) return null;
@@ -490,37 +314,46 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleViewDocument = (document: WebViewDocument) => setSelectedDocument(document);
+  const handleViewDocument = useCallback((document: WebViewDocument) => setSelectedDocument(document), []);
 
-  const downloadFile = async (document: WebViewDocument) => {
+  const downloadFile = useCallback(async (document: WebViewDocument) => {
     try {
       setDownloading(true);
       const fileName = document.name || `${(document.documentTypeDisplay || 'document').replace(/\s+/g, '_')}_${Date.now()}.pdf`;
-      const fileUri = FileSystem.cacheDirectory + fileName;
-      
-      Toast.show({ type: 'info', text1: 'Download Starting', text2: `Downloading ${fileName}...`, position: 'bottom' });
+      const toastPosition = Platform.OS === 'ios' ? 'top' : 'bottom';
+      Toast.show({ type: 'info', text1: 'Download Starting', text2: `Downloading ${fileName}...`, position: toastPosition });
 
+      const baseDirectory = Platform.OS === 'ios' 
+        ? FileSystem.documentDirectory 
+        : FileSystem.cacheDirectory;
+
+      const fileUri = baseDirectory + fileName;
+      
       const downloadResult = await FileSystem.downloadAsync(document.url, fileUri);
 
       if (!downloadResult || !downloadResult.uri) { 
-        Toast.show({ type: 'error', text1: 'Download Failed', text2: 'Could not retrieve downloaded file URI.', position: 'bottom' });
+        Toast.show({ type: 'error', text1: 'Download Failed', text2: 'Could not retrieve downloaded file URI.', position: toastPosition });
         setDownloading(false); return; 
       }
 
-      const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
-      if (!permissions.granted) { 
-        Toast.show({ type: 'warning', text1: 'Permission Denied', text2: 'Storage access permission is required to save the file.', position: 'bottom' });
-        setDownloading(false); return; 
-      }
-      
-      const base64 = await FileSystem.readAsStringAsync(downloadResult.uri, { encoding: FileSystem.EncodingType.Base64 });
-      const newFileUriInSharedStorage = await StorageAccessFramework.createFileAsync(permissions.directoryUri, fileName, 'application/pdf');
-      
-      if (newFileUriInSharedStorage) {
-        await FileSystem.writeAsStringAsync(newFileUriInSharedStorage, base64, { encoding: FileSystem.EncodingType.Base64 });
-        Toast.show({ type: 'success', text1: 'File Saved', text2: `${fileName} saved successfully!`, position: 'bottom' });
-      } else { 
-        Toast.show({ type: 'error', text1: 'Save Failed', text2: 'Could not create file in the selected directory.', position: 'bottom' });
+      if (Platform.OS === 'ios') {
+        Toast.show({ type: 'success', text1: 'File Downloaded', text2: `Downloaded to: ${fileUri}`, position: toastPosition });
+      } else {
+        const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+        if (!permissions.granted) { 
+          Toast.show({ type: 'warning', text1: 'Permission Denied', text2: 'Storage access permission is required to save the file.', position: toastPosition });
+          setDownloading(false); return; 
+        }
+        
+        const base64 = await FileSystem.readAsStringAsync(downloadResult.uri, { encoding: FileSystem.EncodingType.Base64 });
+        const newFileUriInSharedStorage = await StorageAccessFramework.createFileAsync(permissions.directoryUri, fileName, 'application/pdf');
+        
+        if (newFileUriInSharedStorage) {
+          await FileSystem.writeAsStringAsync(newFileUriInSharedStorage, base64, { encoding: FileSystem.EncodingType.Base64 });
+          Toast.show({ type: 'success', text1: 'File Saved', text2: `${fileName} saved successfully!`, position: toastPosition });
+        } else { 
+          Toast.show({ type: 'error', text1: 'Save Failed', text2: 'Could not create file in the selected directory.', position: toastPosition });
+        }
       }
     } catch (error: any) { 
       console.error('Download error:', error); 
@@ -528,16 +361,16 @@ export default function ProfileScreen() {
     } finally { 
       setDownloading(false); 
     }
-  };
+  }, []);
   
-  const handleSelfEditDetails = () => {
+  const handleSelfEditDetails = useCallback(() => {
     router.push({
       pathname: '/multiStepForm',
       params: { targetStep: '0' }
     });
-  };
+  }, [router]);
 
-  const executeProfileAction = async (action: string, employeeForAction: Employee) => {
+  const executeProfileAction = useCallback(async (action: string, employeeForAction: Employee) => {
     if (!targetUserId || employeeForAction.userId?.toString() !== targetUserId) {
         Toast.show({ type: 'error', text1: 'Action Error', text2: 'User context mismatch.', position: 'bottom'});
         return;
@@ -587,9 +420,9 @@ export default function ProfileScreen() {
         setLoadingActionProfile(null);
         setIsAdminMenuVisible(false);
     }
-  };
+  }, [targetUserId, profile?.editRights, router, loadProfileData]);
 
-  const handleOpenProfileEditForm = (employee: Employee | null) => {
+  const handleOpenProfileEditForm = useCallback((employee: Employee | null) => {
     if (employee) {
       setEditingProfileForForm(employee);
       setIsProfileFormVisible(true);
@@ -597,9 +430,9 @@ export default function ProfileScreen() {
     } else {
       Toast.show({ type: 'error', text1: 'Error', text2: 'Cannot edit profile, data missing.', position: 'bottom' });
     }
-  };
+  }, []);
 
-  const handleAdminProfileMenuAction = (action: string, employeeDataForAction: Employee | null) => {
+  const handleAdminProfileMenuAction = useCallback((action: string, employeeDataForAction: Employee | null) => {
     if (!employeeDataForAction) {
       Toast.show({type: 'error', text1: 'Error', text2: 'User data not available for action.', position: 'bottom'});
       setIsAdminMenuVisible(false);
@@ -622,9 +455,9 @@ export default function ProfileScreen() {
     } else {
       executeProfileAction(action, employeeDataForAction);
     }
-  };
+  }, [handleOpenProfileEditForm, executeProfileAction]);
 
-  const handleProfileFormSubmit = async (submittedFormData: EmployeeFormData, formMode: 'add' | 'edit', employeeIdToEdit?: string) => {
+  const handleProfileFormSubmit = useCallback(async (submittedFormData: EmployeeFormData, formMode: 'add' | 'edit', employeeIdToEdit?: string) => {
     if (formMode !== 'edit' || !targetUserId || !editingProfileForForm) {
       Toast.show({ type: 'error', text1: 'Submission Error', text2: 'Invalid form mode or missing user data.', position: 'bottom' });
       return;
@@ -657,10 +490,10 @@ export default function ProfileScreen() {
       const errorMessage = err?.response?.data?.message || err?.message || 'Could not update profile. Please try again.';
       Toast.show({ type: 'error', text1: 'Update Failed', text2: errorMessage, position: 'bottom'});
     }
-  };
+  }, [targetUserId, editingProfileForForm, profile?.permissions, loadProfileData]);
 
 
-  const handleConfirmDeactivationProfile = async () => {
+  const handleConfirmDeactivationProfile = useCallback(async () => {
     if (!employeeToProcessForAction || !targetUserId) {
         Toast.show({ type: 'error', text1: 'Error', text2: 'Required data missing for deactivation.', position: 'bottom' });
         return;
@@ -687,24 +520,24 @@ export default function ProfileScreen() {
         setIsDeactivationModalVisibleProfile(false);
         setResignationDateInputProfile('');
     }
-  };
+  }, [employeeToProcessForAction, targetUserId, resignationDateInputProfile, executeProfileAction]);
 
-  const handleConfirmPermanentDeleteProfile = async () => {
+  const handleConfirmPermanentDeleteProfile = useCallback(async () => {
     if (!employeeToProcessForAction || !targetUserId) {
         Toast.show({ type: 'error', text1: 'Error', text2: 'Required data missing for permanent deletion.', position: 'bottom' });
         return;
     }
     setIsDeletePermanentlyModalVisibleProfile(false);
     await executeProfileAction(MENU_ACTIONS.DELETE_USER_PERMANENTLY, employeeToProcessForAction);
-  };
+  }, [employeeToProcessForAction, targetUserId, executeProfileAction]);
 
-  const handleCancelModalProfile = () => {
+  const handleCancelModalProfile = useCallback(() => {
     setIsDeactivationModalVisibleProfile(false);
     setIsDeletePermanentlyModalVisibleProfile(false);
     setResignationDateInputProfile('');
     setEmployeeToProcessForAction(null);
     setLoadingActionProfile(null);
-  };
+  }, []);
 
   if (loading || loggingOut) { 
     return ( 
@@ -740,146 +573,9 @@ export default function ProfileScreen() {
     );
   }
 
-  const { photoUrl, bankAccount } = profile;
   const employeeData = profile?.employeeDetails || profile?.employee || {};
   const employeeForMenu = getEmployeeObjectFromProfile(profile);
   
-  const canShowSensitiveDataForRoleAndPath = 
-    (pathname === '/profile' && (loggedInUserRole === Roles.EMPLOYEE || loggedInUserRole === Roles.EDITOR)) ||
-    (pathname === '/employee-details' && loggedInUserRole === Roles.ADMIN);
-
-  const canShowSensitiveJoineeType = currentProfileJoineeType === JoineeTypes.NEW;
-
-  const showDocuments = shouldShowDocumentsSectionOriginal(pathname, loggedInUserRole) &&
-                       (canShowSensitiveJoineeType || pathname === '/employee-details');
-
-  const showBankDetails = shouldShowBankDetailsOriginal(loggedInUserRole, currentProfileJoineeType, pathname);
-  
-
-  const renderProfileContent = () => {
-    return (
-      <ScrollView 
-        contentContainerStyle={styles.container} 
-        refreshControl={ 
-          <RefreshControl 
-            refreshing={loading && !loggingOut && !profile}
-            onRefresh={loadProfileData} 
-            colors={[paletteV2.primaryMain]} 
-            tintColor={paletteV2.primaryMain} 
-          /> 
-        }
-      >
-        <ProfileSection title="Employee Details">
-          <ProfileHeaderComponent
-            photoUrl={photoUrl}
-            defaultImage={defaultImage}
-            imageLoading={imageLoading}
-            imageError={imageError}
-            onImageLoad={handleImageLoad}
-            onImageError={handleImageError}
-            showEditButton={pathname === '/profile' && profile?.editRights === true}
-            onEditPress={handleSelfEditDetails}
-            onAvatarPress={() => {
-              if (photoUrl || !imageError) {
-                setIsProfilePicModalVisible(true);
-              }
-            }}
-          />
-          <DetailRow><DetailItem label="Email" value={profile?.email} fullWidth /></DetailRow>
-          <DetailRow>
-            <DetailItem label="DOB" value={formatDateFull(profile?.dateOfBirth)} />
-            <DetailItem label="Gender" value={profile?.gender} />
-          </DetailRow>
-          <DetailRow>
-            <DetailItem label="Blood Group" value={profile?.bloodGroup} />
-            <DetailItem label="Phone" value={profile?.phone} />
-          </DetailRow>
-           <DetailRow>
-            <DetailItem label="Father Name" value={profile?.fatherName} />
-            <DetailItem label="Designation" value={employeeData?.designation} />
-          </DetailRow>
-          <DetailRow>
-            <DetailItem label="DOJ" value={formatDateFull(employeeData?.dateOfJoining)} />
-            <DetailItem label="UAN" value={employeeData?.uan} />
-          </DetailRow>
-          <DetailRow>
-            <DetailItem label="PAN" value={employeeData?.pan} />
-            <DetailItem label="Aadhar" value={employeeData?.aadhar} />
-          </DetailRow>
-          <DetailRow><DetailItem label="Current Address" value={profile?.currentAddress} fullWidth /></DetailRow>
-          <DetailRow><DetailItem label="Permanent Address" value={profile?.permanentAddress} fullWidth /></DetailRow>
-          <DetailRow><DetailItem label="About You" value={profile?.bio} fullWidth /></DetailRow>
-        </ProfileSection>
-
-        <ProfileSection title="Emergency Contacts">
-          {Array.isArray(employeeData?.contacts) && employeeData.contacts.length > 0 ? ( 
-            employeeData.contacts.map((contact: ContactType, index: number) => {
-              const isLastItem = index === employeeData.contacts.length - 1;
-              return (
-                <View 
-                    key={index} 
-                    style={[
-                        styles.contactItemContainer, 
-                        isLastItem && styles.lastContactItemContainer
-                    ]}
-                >
-                  <DetailRow>
-                    <DetailItem label="Name" value={contact.name} />
-                    <DetailItem label="Phone" value={contact.phoneNumber} />
-                  </DetailRow>
-                </View> 
-              );
-            }) 
-          ) : ( <Text style={styles.noDataText}>No emergency contacts available.</Text> )}
-        </ProfileSection>
-        
-        {showDocuments && (
-          <ProfileSection title="Documents">
-            {Object.keys(DetailsCard).map((enumKey) => {
-              const documentDisplayLabel = DetailsCard[enumKey as keyof typeof DetailsCard];
-              const apiDocKey = enumKey;
-              const docFromApi = profile?.documents?.[apiDocKey] as ApiDocumentDetail | undefined;
-              
-              if (EXPERIENCE_SPECIFIC_DOCS.includes(documentDisplayLabel)) {
-                if (employeeData?.status !== 'Experienced') {
-                  return null; 
-                }
-              }
-              return (
-                <DocumentItemComponent
-                  key={apiDocKey}
-                  documentDisplayLabel={documentDisplayLabel}
-                  docFromApi={docFromApi}
-                  onViewDocument={handleViewDocument}
-                />
-              );
-            })}
-          </ProfileSection>
-        )}
-
-        {showBankDetails && (
-          <ProfileSection title="Bank Details">
-            {bankAccount ? ( 
-              <>
-                <DetailRow>
-                  <DetailItem label="Account Holder Name" value={bankAccount.name} />
-                  <DetailItem label="Bank Name" value={bankAccount.bankName}/>
-                </DetailRow>
-                <DetailRow>
-                  <DetailItem label="Account Number" value={bankAccount.accountNumber} />
-                  <DetailItem label="IFSC Code" value={bankAccount.ifscCode}/>
-                </DetailRow>
-                <DetailRow>
-                  <DetailItem label="Branch Name" value={bankAccount.branchName} fullWidth/>
-                </DetailRow>
-              </> 
-            ) : ( <Text style={styles.noDataText}>No bank details available.</Text> )}
-          </ProfileSection>
-        )}
-      </ScrollView>
-    );
-  };
-
   return (
     <Card
       topNavBackgroundColor={paletteV2.surface}
@@ -897,66 +593,61 @@ export default function ProfileScreen() {
       }
       fullHeight={pathname === '/employee-details'}
     >
-      {renderProfileContent()}
+      <ScrollView 
+        contentContainerStyle={styles.container} 
+        refreshControl={ 
+          <RefreshControl 
+            refreshing={loading && !loggingOut && !profile}
+            onRefresh={loadProfileData} 
+            colors={[paletteV2.primaryMain]} 
+            tintColor={paletteV2.primaryMain} 
+          /> 
+        }
+      >
+        <ProfileDetailsSection
+          profile={profile}
+          employeeData={employeeData}
+          pathname={pathname}
+          loggedInUserRole={loggedInUserRole}
+          currentProfileJoineeType={currentProfileJoineeType}
+          defaultImage={defaultImage}
+          imageLoading={imageLoading}
+          imageError={imageError}
+          onImageLoad={handleImageLoad}
+          onImageError={handleImageError}
+          handleSelfEditDetails={handleSelfEditDetails}
+          handleViewDocument={handleViewDocument}
+          setIsProfilePicModalVisible={setIsProfilePicModalVisible}
+        />
+      </ScrollView>
 
-      {loggedInUserRole === Roles.ADMIN && employeeForMenu && (
-         <ReactNativeModal 
-            animationType="fade" 
-            transparent={true} 
-            visible={isAdminMenuVisible} 
-            onRequestClose={() => setIsAdminMenuVisible(false)}
-          >
-            <TouchableOpacity 
-              style={styles.modalOverlay_Profile} 
-              activeOpacity={1} 
-              onPressOut={() => setIsAdminMenuVisible(false)}
-            >
-                <View style={styles.adminMenuOuterContainer_Profile} onStartShouldSetResponder={() => true}> 
-                    <EmployeeActionMenu 
-                        employee={employeeForMenu}
-                        isVisible={isAdminMenuVisible}
-                        onAction={handleAdminProfileMenuAction}
-                        loadingAction={loadingActionProfile ? {userId: parseInt(loadingActionProfile.userId || '0' ,10), action: loadingActionProfile.action} : null}
-                    />
-                </View>
-            </TouchableOpacity>
-        </ReactNativeModal>
-      )}
-
-      <DeactivationModal
-        isVisible={isDeactivationModalVisibleProfile}
-        employee={employeeToProcessForAction}
-        onConfirm={handleConfirmDeactivationProfile}
-        onCancel={handleCancelModalProfile}
-        isLoading={loadingActionProfile?.action === MENU_ACTIONS.DELETE_USER && loadingActionProfile?.userId === targetUserId}
-        resignationDate={resignationDateInputProfile}
-        onResignationDateChange={setResignationDateInputProfile}
-       />
-
-      <DeletePermanentlyModal
-        isVisible={isDeletePermanentlyModalVisibleProfile}
-        employee={employeeToProcessForAction}
-        onConfirm={handleConfirmPermanentDeleteProfile}
-        onCancel={handleCancelModalProfile}
-        isLoading={loadingActionProfile?.action === MENU_ACTIONS.DELETE_USER_PERMANENTLY && loadingActionProfile?.userId === targetUserId}
-      />
-      
-      <EmployeeForm
-        isVisible={isProfileFormVisible}
-        mode="edit"
-        employeeToEdit={editingProfileForForm}
-        onSubmit={(formData, mode) => handleProfileFormSubmit(formData, mode, editingProfileForForm?.userId?.toString())}
-        onClose={() => {
-          setIsProfileFormVisible(false);
-          setEditingProfileForForm(null);
-        }}
-      />
-
-      <ProfilePictureModal
-        isVisible={isProfilePicModalVisible}
-        imageUrl={photoUrl || null}
+      <ProfileModalsAndActions
+        loggedInUserRole={loggedInUserRole}
+        employeeForMenu={employeeForMenu}
+        isAdminMenuVisible={isAdminMenuVisible}
+        setIsAdminMenuVisible={setIsAdminMenuVisible}
+        loadingActionProfile={loadingActionProfile}
+        isDeactivationModalVisibleProfile={isDeactivationModalVisibleProfile}
+        setIsDeactivationModalVisibleProfile={setIsDeactivationModalVisibleProfile}
+        isDeletePermanentlyModalVisibleProfile={isDeletePermanentlyModalVisibleProfile}
+        setIsDeletePermanentlyModalVisibleProfile={setIsDeletePermanentlyModalVisibleProfile}
+        resignationDateInputProfile={resignationDateInputProfile}
+        setResignationDateInputProfile={setResignationDateInputProfile}
+        employeeToProcessForAction={employeeToProcessForAction}
+        handleAdminProfileMenuAction={handleAdminProfileMenuAction}
+        handleConfirmDeactivationProfile={handleConfirmDeactivationProfile}
+        handleConfirmPermanentDeleteProfile={handleConfirmPermanentDeleteProfile}
+        handleCancelModalProfile={handleCancelModalProfile}
+        isProfileFormVisible={isProfileFormVisible}
+        setIsProfileFormVisible={setIsProfileFormVisible}
+        editingProfileForForm={editingProfileForForm}
+        setEditingProfileForForm={setEditingProfileForForm}
+        handleProfileFormSubmit={handleProfileFormSubmit}
+        isProfilePicModalVisible={isProfilePicModalVisible}
+        setIsProfilePicModalVisible={setIsProfilePicModalVisible}
+        profilePhotoUrl={profile.photoUrl}
         defaultImage={defaultImage}
-        onClose={() => setIsProfilePicModalVisible(false)}
+        targetUserId={targetUserId}
       />
     </Card>
   );

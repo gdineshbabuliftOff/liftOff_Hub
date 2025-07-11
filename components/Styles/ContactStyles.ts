@@ -21,7 +21,9 @@ export const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    flexGrow: 1,
+    marginHorizontal: 10,
+    height: 40,
     backgroundColor: '#f1f1f1',
     paddingHorizontal: 10,
     borderRadius: 8,

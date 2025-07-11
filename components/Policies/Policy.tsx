@@ -7,8 +7,7 @@ import {
   ActivityIndicator,
   Animated,
   FlatList,
-  Image,
-  RefreshControl,
+  Image, Platform, RefreshControl,
   Text,
   TextInput,
   TouchableOpacity,
@@ -19,7 +18,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { WebView } from 'react-native-webview';
 import { getPolicies } from '../Api/adminApi';
 import Card from '../Layouts/Card';
-import { styles } from '../Styles/PolicyStyles'; // Assuming styles are defined here
+import { styles } from '../Styles/PolicyStyles';
 
 const paletteV2 = {
   primaryMain: '#5DBBAD',
@@ -131,8 +130,13 @@ const PoliciesScreen = () => {
       setDownloading(true);
   
       const fileName = policy.fileName || 'downloaded_file.pdf';
-      const fileUri = FileSystem.cacheDirectory + fileName;
+      const baseDirectory = Platform.OS === 'ios' 
+        ? FileSystem.documentDirectory 
+        : FileSystem.cacheDirectory;
+      const fileUri = baseDirectory + fileName;
   
+      alert(`Downloading ${fileName}...`);
+
       const downloadResult = await FileSystem.downloadAsync(policy.signedUrl, fileUri);
   
       if (!downloadResult || !downloadResult.uri) {
@@ -141,30 +145,34 @@ const PoliciesScreen = () => {
         return;
       }
   
-      const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
-      if (!permissions.granted) {
-        alert('Permission denied to access storage.');
-        setDownloading(false);
-        return;
-      }
-  
-      const base64 = await FileSystem.readAsStringAsync(downloadResult.uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-  
-      const newUri = await StorageAccessFramework.createFileAsync(
-        permissions.directoryUri,
-        fileName,
-        'application/pdf'
-      );
-  
-      if (newUri) {
-        await FileSystem.writeAsStringAsync(newUri, base64, {
+      if (Platform.OS === 'ios') {
+        alert(`File "${fileName}" downloaded to your device.`);
+      } else {
+        const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+        if (!permissions.granted) {
+          alert('Permission denied to access storage.');
+          setDownloading(false);
+          return;
+        }
+    
+        const base64 = await FileSystem.readAsStringAsync(downloadResult.uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
-        alert('File saved successfully!');
-      } else {
-        alert('Failed to create file in selected directory.');
+    
+        const newUri = await StorageAccessFramework.createFileAsync(
+          permissions.directoryUri,
+          fileName,
+          'application/pdf'
+        );
+    
+        if (newUri) {
+          await FileSystem.writeAsStringAsync(newUri, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          alert('File saved successfully!');
+        } else {
+          alert('Failed to create file in selected directory.');
+        }
       }
     } catch (error) {
       console.error('Download error:', error);
@@ -195,7 +203,7 @@ const PoliciesScreen = () => {
           </Text>
         </View>
       }
-      fullHeight={true} // Set fullHeight to true for PDF viewer
+      fullHeight={true}
     >
       {pdfLoading && (
         <View style={styles.loaderContainer}>
@@ -298,7 +306,6 @@ const PoliciesScreen = () => {
       {policyAdd && (
         <TouchableOpacity
           onPress={() => router.push('/managePolicy')}
-          // Apply the primaryMain color to the FAB background
           style={[styles.fab, { backgroundColor: paletteV2.primaryMain }]} 
         >
           <Ionicons name="add" size={28} color={paletteV2.textPrimaryOnDark} />
